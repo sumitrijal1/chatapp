@@ -19,6 +19,7 @@ exports.creategroupchat = async(req,res)=>{
     }
     const [chatresult ]= await db.execute('insert into chat (type,name) values(?,?) ',['group',name])
     const chatid = chatresult.insertid 
+    const chatname = name
 
     //now we have the chatid of the newly created group chat and we have the list of user ids that will be added to the group chat
 
@@ -28,7 +29,8 @@ exports.creategroupchat = async(req,res)=>{
 
     res.status(201).json({
         message:"group chat created successfully",
-        chatid: chatid
+        chatid: chatid,
+        chatname: chatname
     })
 }
 
