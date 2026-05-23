@@ -21,7 +21,12 @@ exports.privatechat = async(req,res)=>{
             chatId: existingchat[0].id
         })
     }
-    
+    const [users] = await db.execute(
+   'SELECT id,name FROM users WHERE id=?',
+   [receiverid]
+)
+
+const user = users[0]
 
    //creating the private chat
    const [chatresult] = await db.execute('insert into chat(type) values(?)',[ 'private' ])
