@@ -27,11 +27,13 @@ exports.creategroupchat = async(req,res)=>{
     values.push([chatid,userid])
     await db.execute('insert into chat_members(chat_id,user_id) values ?',[values]);
 
-    res.status(201).json({
-        message:"group chat created successfully",
-        chatid: chatid,
-        chatname: chatname
-    })
+   res.status(201).json({
+   data:{
+      id:chatid,
+      type:"group",
+      name:chatname
+   }
+})
 }
 
 
