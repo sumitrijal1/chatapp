@@ -26,7 +26,7 @@ const Loginpage = () => {
      dispatch(resetStatus()) // 👈 clear stale status before dispatching
     dispatch(loginuser(userdata))
   }
-console.log(status)
+
 useEffect(() => {
   if (status === "succeeded") {
     localStorage.setItem("token", token)

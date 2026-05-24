@@ -7,12 +7,12 @@ import { setSelecteduser } from "../store/chatslice";
 
 export default function UsersList() {
    const dispatch = useDispatch()
-   const{ users,selecteduser,status}  = useSelector((state) => state.chat)
+   const{ users,selecteduser,userstatus}  = useSelector((state) => state.chat)
    
    useEffect(() => {
     dispatch(fetchUsers())
    }, [dispatch])
-   if (status === "loading") {
+   if (userstatus === "loading") {
         return <div className="p-3 text-white">Loading users...</div>
     }
 
@@ -20,14 +20,18 @@ export default function UsersList() {
     if (!users || users.length === 0) {
         return <div className="p-3 text-white">No users found</div>
     }
+    const handleUserClick = (user) => {
+        dispatch(setSelecteduser(user))
+        dispatch()
+    }
  
   return (
     <div className="p-3 space-y-2" >
       {users?.map((user, index) => (
         <div
-          key={index}
+          key={user.id}
           className="p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition"
-         onClick={() => dispatch(setSelecteduser(user))}>
+         onClick={() => handleUserClick(user)}>
           {user.name}
         </div>
       ))}
