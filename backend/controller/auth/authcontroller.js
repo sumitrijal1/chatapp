@@ -54,11 +54,11 @@ export const login = async(req,res)=>{
             })
         }
         const token = jwt.sign({
-            id:user.id,name:user.username,email:user.email
+            id:user.id,name:user.name,email:user.email
         }, process.env.JWT_SECRET, {expiresIn:'7d'});
         res.json({ token ,user:{
             id:user.id,
-            name:user.username,
+            name:user.name,
             email:user.email
         }});
     } catch (error) {
