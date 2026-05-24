@@ -15,7 +15,7 @@ const chatslice = createSlice({
         users:[],
         chatdata:[],
         status: statususe.idle,
-        selectedchat:{}
+        selectedchat:null
 
   },
   reducers:{
@@ -47,7 +47,7 @@ const chatslice = createSlice({
   }
 })
 
-    export const {setChatdata,setStatus,setSelectedchat,deleteChat,addChat} = chatslice.actions
+    export const {setUsers,setChatdata,setStatus,setSelectedchat,deleteChat,addChat} = chatslice.actions
 
     export default chatslice.reducer
 
@@ -68,7 +68,7 @@ const chatslice = createSlice({
         return async function createChatThunk(dispatch){
             dispatch(setStatus(statususe.loading))
             try{
-                const response = await apiauthen.post("/createchat",data)
+                const response = await apiauthen.post("/chat/createchat",data)
                 dispatch(addChat(response.data.data))
                 dispatch(setStatus(statususe.succeeded))
             }catch(error){
@@ -80,7 +80,7 @@ const chatslice = createSlice({
         return async function createPrivateChatThunk(dispatch){
             dispatch(setStatus(statususe.loading))  
             try{
-                const response = await apiauthen.post(`/createprivate/${receiverId}`)
+                const response = await apiauthen.post(`/chat/createprivate/${receiverId}`)
                 dispatch(addChat(response.data.data))
                 dispatch(setStatus(statususe.succeeded))
             }       
@@ -94,7 +94,7 @@ const chatslice = createSlice({
         return async function deleteChatByIdThunk(dispatch){
             dispatch(setStatus(statususe.loading))
             try{
-                await apiauthen.patch(`/deletechat/${chatId}`)
+                await apiauthen.patch(`/chat/deletechat/${chatId}`)
                 dispatch(deleteChat({chatId}))
                 dispatch(setStatus(statususe.succeeded))
             }catch(error){
@@ -108,7 +108,8 @@ const chatslice = createSlice({
         return async function fetchUsersThunk(dispatch){
             dispatch(setStatus(statususe.loading))
             try{
-                const response = await apiauthen.get("/fetchusers")
+                const response = await apiauthen.get("/chat/users")
+               
                 dispatch(setUsers(response.data.data))
                 dispatch(setStatus(statususe.succeeded))
             }catch(error){

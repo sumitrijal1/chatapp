@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { LiaAddressCard } from "react-icons/lia";
 import { loginuser } from '../store/authslice'  // 👈 import resetStatus
-
+ import { resetStatus } from '../store/authslice'  // 👈 import resetStatus
 const Loginpage = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -22,14 +22,15 @@ const Loginpage = () => {
 
   const handlesubmit = (e) => {
     e.preventDefault()
-    dispatch(resetStatus())       // 👈 clear stale status before dispatching
+    if(status==="loading") return; // 👈 prevent multiple submits
+     dispatch(resetStatus()) // 👈 clear stale status before dispatching
     dispatch(loginuser(userdata))
   }
-
+console.log(status)
 useEffect(() => {
   if (status === "succeeded") {
     localStorage.setItem("token", token)
-      // 👈 reset BEFORE navigate
+    dispatch(resetStatus()) // 👈 reset BEFORE navigate
     navigate("/")
   }
   if (status === "failed") {

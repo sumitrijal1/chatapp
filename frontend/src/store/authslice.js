@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { API, apiauthen } from "../http";
 import {io} from 'socket.io-client'
+import { getSocket,initSocket, disconnectSocket} from "../http/socketmanager";
 
 const statususe = Object.freeze({
     idle: 'idle',
@@ -12,11 +13,11 @@ const statususe = Object.freeze({
 const authslice = createSlice({
     name:'auth',
     initialState:{
-        data:[],
+        data:null,
         status: statususe.idle,
-        token:'',
+        token:null,
         email:'',
-        socket:null,
+        
         onlineusers:[]
     },
     reducers:{
@@ -37,16 +38,17 @@ const authslice = createSlice({
         setEmail(state,action){
             state.email = action.payload
         },
-        setSocket(state,action){
-            state.socket= action.payload
-        },
+        
         setOnlineusers(state,action){
             state.onlineusers = action.payload
+        },
+        resetStatus(state) {         // ✅ add this
+            state.status = statususe.idle
         }
 
     }
 })
- export const {setUser,setStatus,setToken,logout,setEmail,setSocket,setOnlineusers} = authslice.actions
+ export const {setUser,setStatus,setToken,logout,setEmail,setOnlineusers,resetStatus} = authslice.actions
 
  export default authslice.reducer
 
@@ -70,13 +72,16 @@ export function loginuser(data){
             const response = await API.post("/login",data)
             dispatch(setUser(response.data.user))
             dispatch(setToken(response.data.token))
+          
             dispatch(setStatus(statususe.succeeded))
-            dispatch(connectSocket())
+            
         } catch(error){
             dispatch(setStatus(statususe.failed))
         }
+        dispatch(connectSocket())
 }
 }
+//The rule is — always set succeeded status last, after everything else is ready. Since useEffect watches status, it fires the moment status changes — so anything after setStatus(succeeded) may be too late.
 
 export function fetchprofile(){
     return async function fetchProfileThunk(dispatch){ 
@@ -119,22 +124,22 @@ export function verifyotp(data){
 //coonect socket function to handle socket connection and online users update 
 export function connectSocket(){
     return function connectSocketThunk(dispatch,getState){
-        const {auth} = getState();
+       try{
+         const {auth} = getState();
 
         //already connected 
-        if(auth.socket?.connected) return ;
+        if(getSocket()?.connected) return ;
         //no logges in user
         if(!auth.data?.id) return 
 
-        const newsocket =io("http://localhost:5000",{
-            query:{
-                userId:auth.data.id
-            }
-        });
-        newsocket.connect()
-        dispatch(setSocket(newsocket));
-        newsocket.on("getOnlineUsers",(users)=>{
+        const socket= initSocket(auth.data.id)
+        
+        socket.on("getOnlineUsers",(users)=>{
             dispatch(setOnlineusers(users))
         })
+       }
+         catch(error){  
+            console.error("Socket connection error:", error)
+         }
     }
 }
