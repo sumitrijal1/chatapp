@@ -2,12 +2,12 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { fetchUsers } from "../store/chatslice";
-import { setSelectedchat } from "../store/chatslice";
+import { setSelecteduser } from "../store/chatslice";
 
 
 export default function UsersList() {
    const dispatch = useDispatch()
-   const{ users,selectedchat,status}  = useSelector((state) => state.chat)
+   const{ users,selecteduser,status}  = useSelector((state) => state.chat)
    
    useEffect(() => {
     dispatch(fetchUsers())
@@ -27,7 +27,7 @@ export default function UsersList() {
         <div
           key={index}
           className="p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition"
-         onClick={() => dispatch(setSelectedchat(user))}>
+         onClick={() => dispatch(setSelecteduser(user))}>
           {user.name}
         </div>
       ))}
