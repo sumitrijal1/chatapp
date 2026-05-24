@@ -1,9 +1,10 @@
-const { register, login } = require('../../controller/auth/authcontroller');
-const catchasync = require('../../services/catchasync');
+import { register, login } from '../../controller/auth/authcontroller.js';
+import catchasync from '../../services/catchasync.js';
+import express from 'express';
 
-const router = require('express').Router(); 
+const router = express.Router(); 
 
 router.route("/register").post(catchasync(register))
 router.route("/login").post(catchasync(login))
 
-module.exports = router;
+export default router;

@@ -1,13 +1,14 @@
 
-const { deletemessageforme, deleteforeveryone, undodelteforeveryone } = require('../../controller/user/deletemessage');
-const { forwardMessage } = require('../../controller/user/forwardmessages');
-const { getmessage } = require('../../controller/user/getmessage');
-const { sendmessage } = require('../../controller/user/sendmessage');
-const authenticateToken = require('../../middleware/auth');
-const catchasync = require('../../services/catchasync');
+import { deletemessageforme, deleteforeveryone, undodelteforeveryone } from '../../controller/user/deletemessage.js';
+import { forwardMessage } from '../../controller/user/forwardmessages.js';
+import { getmessage } from '../../controller/user/getmessage.js';
+import { sendmessage } from '../../controller/user/sendmessage.js';
+import authenticateToken from '../../middleware/auth.js';
+import catchasync from '../../services/catchasync.js';
+import express from 'express';
 
 
-const router = require('express').Router();
+const router = express.Router();
 
 router.route("/getallmessages/:chatid").get(authenticateToken,catchasync(getmessage))
 router.route("/sendmessage/:chatid").post(authenticateToken,catchasync(sendmessage))
@@ -15,4 +16,4 @@ router.route("/deletemessageforme/:messageid").post(authenticateToken,catchasync
 router.route("/recovermessage/:messageid").patch(authenticateToken,catchasync(undodelteforeveryone))
 router.route("/forwardmessage").post(authenticateToken,catchasync(forwardMessage))
 
-module.exports = router;
+export default router;

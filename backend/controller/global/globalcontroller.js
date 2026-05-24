@@ -1,6 +1,6 @@
- const db= require('../../db')
+ import db from '../../db.js'
 
-exports.getallusers = async(req,res)=>{
+export const getallusers = async(req,res)=>{
     const userid= req.user.id
     const [users] = await db.execute('SELECT id,name,email FROM users WHERE id != ?',[userid])
      

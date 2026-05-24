@@ -1,6 +1,6 @@
-const db = require('../../db')
+import db from '../../db.js'
 
-exports.deletechatforme = async(req,res)=>{
+export const deletechatforme = async(req,res)=>{
     const userid = req.user.id
     const {chatid} =req.params
 
@@ -25,7 +25,7 @@ exports.deletechatforme = async(req,res)=>{
      }) 
 }
 
-exports.undodeletechatforme = async(req,res)=>{
+export const undodeletechatforme = async(req,res)=>{
     const userid = req.user.id
     const {chatid} =req.params
      

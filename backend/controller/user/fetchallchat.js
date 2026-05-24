@@ -1,6 +1,6 @@
-const db = require('../../db')
+import db from '../../db.js'
 
-exports.getchart = async(req,res)=>{
+export const getchart = async(req,res)=>{
     const userid = req.user.id
     const [chats] = await db.execute(`select c.id ,c.type,c.name ,u.id As otheruserid ,u.name As otherusername
          from chart c

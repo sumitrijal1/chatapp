@@ -1,7 +1,7 @@
-const db = require('../../db')
+import db from '../../db.js'
 //create chat between two users
 
-exports.privatechat = async(req,res)=>{
+export const privatechat = async(req,res)=>{
     const senderid = req.user.id
     const receiverid = req.params.id
      

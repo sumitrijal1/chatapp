@@ -1,6 +1,6 @@
-const db = require('../../db')
+import db from '../../db.js'
 
-exports.getmessage = async(req,res)=>{
+export const getmessage = async(req,res)=>{
     const userid = req.user.id
     const {chatid} = req.params;
 

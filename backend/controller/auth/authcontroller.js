@@ -1,9 +1,9 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require("../../db");
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import db from "../../db.js";
 
 
-exports.register = async (req, res) => {
+export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
         if(!username || !email || !password) {
@@ -30,7 +30,7 @@ exports.register = async (req, res) => {
     }
 }
 
-exports.login = async(req,res)=>{
+export const login = async(req,res)=>{
     try {
         const {email,password}= req.body;
         if(!email || !password) {

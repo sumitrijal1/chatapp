@@ -1,8 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const http = require('http');
-const { Server } = require('socket.io');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import http from 'http';
+import { Server } from 'socket.io';
+
+import authRouter from './routes/auth/authroutes.js';
+import chatRouter from './routes/user/chat.js';
+import messageRouter from './routes/user/messages.js';
 
 dotenv.config();
 
@@ -27,18 +31,9 @@ const io = new Server(server, {
    }
 });
 
-
-
 app.get('/', (req, res) => {
    res.json({ message: 'Hello from the backend!' });
 });
-
-// Export io and server BEFORE requiring routes to avoid circular dependency
-module.exports = { server, io };
-
-const authRouter = require('./routes/auth/authroutes');
-const chatRouter = require('./routes/user/chat');
-const messageRouter = require('./routes/user/messages');
 
 app.use('/api', authRouter);
 app.use('/api/chat', chatRouter);
@@ -77,3 +72,5 @@ const port = process.env.PORT || 5000;
 server.listen(port, () => {
    console.log(`Server running on port ${port}`);
 });
+
+export { server, io };

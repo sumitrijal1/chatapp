@@ -1,6 +1,6 @@
-const db = require('../../db')
+import db from '../../db.js'
 
-exports.creategroupchat = async(req,res)=>{
+export const creategroupchat = async(req,res)=>{
     const userid = req.user.id
     //here receiverid is an array of user ids that will be added to the group chat
     const{name,receiverid} = req.body 

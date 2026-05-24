@@ -1,7 +1,8 @@
-const jwt = require('jsonwebtoken');
-const {promisify} = require('util');
-const db = require("../db");    
-require('dotenv').config();
+import jwt from 'jsonwebtoken';
+import {promisify} from 'util';
+import db from "../db.js";    
+import dotenv from 'dotenv';
+dotenv.config();
 
 const authenticateToken = async(req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
@@ -28,4 +29,4 @@ const authenticateToken = async(req, res, next) => {
     }
 
 };
-module.exports = authenticateToken;
+export default authenticateToken;

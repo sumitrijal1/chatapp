@@ -1,18 +1,19 @@
-const { getallusers } = require('../../controller/global/globalcontroller');
-const { creategroupchat } = require('../../controller/user/chatgroup');
-const { privatechat } = require('../../controller/user/chatprivate');
-const { deletechatforme, undodeletechatforme } = require('../../controller/user/deletechat');
-const { getchart } = require('../../controller/user/fetchallchat');
-const authenticateToken = require('../../middleware/auth');
-const catchasync = require('../../services/catchasync');
+import { getallusers } from '../../controller/global/globalcontroller.js';
+import { creategroupchat } from '../../controller/user/chatgroup.js';
+import { privatechat } from '../../controller/user/chatprivate.js';
+import { deletechatforme, undodeletechatforme } from '../../controller/user/deletechat.js';
+import { getchart } from '../../controller/user/fetchallchat.js';
+import authenticateToken from '../../middleware/auth.js';
+import catchasync from '../../services/catchasync.js';
+import express from 'express';
 
 
 
-const router = require('express').Router();
+const router = express.Router();
 router.route("/users").get(authenticateToken,catchasync(getallusers))
 router.route("/creategroup").post(authenticateToken,catchasync(creategroupchat))
 router.route("/createprivate/:receiverid").post(authenticateToken,catchasync(privatechat))
 router.route("/deletechat/:chatid").patch(authenticateToken,catchasync(deletechatforme))
 router.route("/restorechat/:chatid").patch(authenticateToken,catchasync(undodeletechatforme))
 router.route("/fetchchats").get(authenticateToken,catchasync(getchart))
-module.exports = router;
+export default router;

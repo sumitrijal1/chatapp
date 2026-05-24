@@ -1,5 +1,5 @@
 // middlewares/errorHandler.js
-module.exports = (err, req, res, next) => {
+export default (err, req, res, next) => {
 
   // MySQL duplicate entry
   if (err.code === "ER_DUP_ENTRY") {

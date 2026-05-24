@@ -1,6 +1,6 @@
-const db = require('../../db')
+import db from '../../db.js'
 
-exports.deletemessageforme = async (req,res)=>{
+export const deletemessageforme = async (req,res)=>{
     const userid = req.user.id 
     const {messageid} = req.params
 
@@ -42,7 +42,7 @@ exports.deletemessageforme = async (req,res)=>{
     })
 }
 
-exports.deleteforeveryone = async (req, res) => {
+export const deleteforeveryone = async (req, res) => {
     const userid = req.user.id;
     const { messageid } = req.params;
 
@@ -78,7 +78,7 @@ exports.deleteforeveryone = async (req, res) => {
     });
 };
 
-exports.undodelteforeveryone = async (req, res) => {
+export const undodelteforeveryone = async (req, res) => {
     const userid = req.user.id;
     const { messageid } = req.params;
 

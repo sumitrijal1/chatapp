@@ -1,8 +1,8 @@
-const db = require('../../db')
-const { default: cloudinary } = require('../../services/cloudinary')
-const {io,server} = require('../../server')
+import db from '../../db.js'
+import cloudinary from '../../services/cloudinary.js'
+import { io, server } from '../../server.js'
 
-exports.sendmessage = async (req, res) => {
+export const sendmessage = async (req, res) => {
 
    const senderid = req.user.id;
    const{chatid} = req

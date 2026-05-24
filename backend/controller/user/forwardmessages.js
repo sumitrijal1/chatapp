@@ -1,7 +1,7 @@
-const db = require("../../db");
-const { io } = require("../../server");
+import db from "../../db.js";
+import { io } from "../../server.js";
 
-exports.forwardMessage = async (req, res) => {
+export const forwardMessage = async (req, res) => {
 
    const senderId = req.user.id;
 
