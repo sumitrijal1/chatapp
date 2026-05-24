@@ -16,7 +16,8 @@ const chatslice = createSlice({
         chatdata:[],
         userstatus: statususe.idle,
         chatstatus: statususe.idle,
-        selecteduser:null
+        selecteduser:[],
+        selectedchat:null
 
   },
   reducers:{
@@ -36,6 +37,9 @@ const chatslice = createSlice({
     setSelecteduser(state,action){
         state.selecteduser = action.payload
     },
+    setSelectedchat(state,action){
+        state.selectedchat = action.payload
+    },
     deleteChat(state,action){ 
         state.chatdata = state.chatdata.filter(chat => chat.id !== action.payload.chatId)
     },
@@ -52,7 +56,7 @@ const chatslice = createSlice({
   }
 })
 
-    export const {setUsers,setChatdata,setuserStatus,setchatStatus,setSelecteduser,deleteChat,addChat} = chatslice.actions
+    export const {setUsers,setChatdata,setuserStatus,setchatStatus,setSelecteduser,setSelectedchat,deleteChat,addChat} = chatslice.actions
 
     export default chatslice.reducer
 

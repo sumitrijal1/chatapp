@@ -3,7 +3,7 @@ import db from '../../db.js'
 export const creategroupchat = async(req,res)=>{
     const userid = req.user.id
     //here receiverid is an array of user ids that will be added to the group chat
-    const{name,receiverid} = req.body 
+    const{name,receiverId} = req.body 
     //check if the group chat name is provided
     if(!name){
         return res.status(400).json({
@@ -12,18 +12,18 @@ export const creategroupchat = async(req,res)=>{
     }
     //check if receiverid is provided
     //array.isarray is used to check if the receiverid is an array of user ids
-    if(!receiverid || !Array.isArray(receiverid)){
+    if(!receiverId || !Array.isArray(receiverId)){
         return res.status(400).json({
             message:"please provide a list of users for the group chat"
         })
     }
     const [chatresult ]= await db.execute('insert into chat (type,name) values(?,?) ',['group',name])
-    const chatid = chatresult.insertid 
+    const chatid = chatresult.insertId 
     const chatname = name
 
     //now we have the chatid of the newly created group chat and we have the list of user ids that will be added to the group chat
 
-    const values  = receiverid.map(id=>[chatid,id]);
+    const values  = receiverId.map(id=>[chatid,id]);
     values.push([chatid,userid])
     await db.execute('insert into chat_members(chat_id,user_id) values ?',[values]);
 

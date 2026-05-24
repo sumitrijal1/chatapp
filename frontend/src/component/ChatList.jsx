@@ -7,10 +7,10 @@
 export default function ChatList() {
    const  dispatch = useDispatch()
    const { chatdata,chatstatus } = useSelector((state) => state.chat)
-
+  
     useEffect(() => {
         dispatch(fetchChats())
-    },[dispatch])
+    },[])
 
     if (chatstatus === "loading") {
         return <div className="p-3 text-white">Loading chats...</div>
@@ -22,16 +22,25 @@ export default function ChatList() {
 
   
 
-  return (
+   return (
     <div className="p-3 space-y-2">
-      {chatdata?.map((chat, index) => (
-        <div
-          key={chat.id}
-          className="p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition"
-        >
-          {chat.name}
-        </div>
-      ))}
+        {chatdata?.map((chat) => (
+            <div
+                key={chat.id}
+                className="p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition"
+            >
+                <span className="text-white font-medium">
+                    {chat.type === "private" 
+                        ? chat.otherusername   
+                        : chat.name           
+                    }
+                </span>
+                <span className="text-zinc-400 text-xs ml-2">
+                    {chat.type}               
+                </span>
+            </div>
+        ))}
     </div>
-  );
+)
+  
 }

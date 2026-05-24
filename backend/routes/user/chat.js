@@ -12,7 +12,7 @@ import express from 'express';
 const router = express.Router();
 router.route("/users").get(authenticateToken,catchasync(getallusers))
 router.route("/creategroup").post(authenticateToken,catchasync(creategroupchat))
-router.route("/createprivate/:receiverid").post(authenticateToken,catchasync(privatechat))
+router.route("/createprivate/:receiverId").post(authenticateToken,catchasync(privatechat))
 router.route("/deletechat/:chatid").patch(authenticateToken,catchasync(deletechatforme))
 router.route("/restorechat/:chatid").patch(authenticateToken,catchasync(undodeletechatforme))
 router.route("/fetchchats").get(authenticateToken,getchat)
