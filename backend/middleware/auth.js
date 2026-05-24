@@ -22,7 +22,7 @@ const authenticateToken = async(req, res, next) => {
         if(!doesuserexist.length){
             return res.status(401).json({ message: "Invalid token. User does not exist." });
         }
-        req.user = doesuserexist; 
+        req.user = doesuserexist[0]; 
         next();
     } catch (error) {
         return res.status(401).json({ message: "Invalid token." });
