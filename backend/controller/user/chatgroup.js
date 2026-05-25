@@ -1,41 +1,43 @@
 import db from '../../db.js'
 
-export const creategroupchat = async(req,res)=>{
+export const creategroupchat = async(req, res) => {
+    console.log("CHATGROUP FILE LOADED v2")  // ← very first line
     const userid = req.user.id
-    //here receiverid is an array of user ids that will be added to the group chat
-    const{name,receiverId} = req.body 
-    //check if the group chat name is provided
-    if(!name){
-        return res.status(400).json({
-            message:"please provide a name for the group chat"
-        })
+    const { name, receiverId } = req.body
+
+    if(!name) {
+        return res.status(400).json({ message: "please provide a name for the group chat" })
     }
-    //check if receiverid is provided
-    //array.isarray is used to check if the receiverid is an array of user ids
-    if(!receiverId || !Array.isArray(receiverId)){
-        return res.status(400).json({
-            message:"please provide a list of users for the group chat"
-        })
+
+    if(!receiverId || !Array.isArray(receiverId)) {
+        return res.status(400).json({ message: "please provide a list of users for the group chat" })
     }
-    const [chatresult ]= await db.execute('insert into chat (type,name) values(?,?) ',['group',name])
-    const chatid = chatresult.insertId 
-    const chatname = name
 
-    //now we have the chatid of the newly created group chat and we have the list of user ids that will be added to the group chat
+    // step 1 - create group
+    const [chatresult] = await db.execute(
+        'INSERT INTO chat(type, name) VALUES(?, ?)',
+        ['group', name]
+    )
+    const chatid = chatresult.insertId
 
-    const values  = receiverId.map(id=>[chatid,id]);
-    values.push([chatid,userid])
-    await db.execute('insert into chat_members(chat_id,user_id) values ?',[values]);
+    // step 2 - insert members one by one ✅
+    const allMembers = [...receiverId, userid]
 
-   res.status(201).json({
-   data:{
-      id:chatid,
-      type:"group",
-      name:chatname
-   }
-})
+    for(const memberId of allMembers) {
+        await db.execute(
+            'INSERT INTO chat_members(chat_id, user_id) VALUES(?, ?)',
+            [chatid, Number(memberId)]    // ✅ ensure number not string
+        )
+    }
+
+    res.status(201).json({
+        data: {
+            id: chatid,
+            type: "group",
+            name: name
+        }
+    })
 }
-
 
 
 
