@@ -52,6 +52,7 @@ const chatslice = createSlice({
         state.chatdata.push(action.payload)
     }
 }
+   
 
   }
 })
@@ -77,7 +78,7 @@ const chatslice = createSlice({
         return async function createChatThunk(dispatch){
             dispatch(setchatStatus(statususe.loading))
             try{
-                const response = await apiauthen.post("/chat/createchat",data)
+                const response = await apiauthen.post("/chat/creategroup",data)
                 dispatch(addChat(response.data.data))
                 dispatch(setchatStatus(statususe.succeeded))
             }catch(error){
@@ -90,6 +91,9 @@ const chatslice = createSlice({
             dispatch(setchatStatus(statususe.loading))  
             try{
                 const response = await apiauthen.post(`/chat/createprivate/${receiverId}`)
+                console.log("response from create private chat:", response.data.data)
+                 console.log("full response:", response.data) // 👈 log the full response
+                console.log("chatdata before add:", store.getState().chat.chatdata) // check existing IDs
                 dispatch(addChat(response.data.data))
                 dispatch(setchatStatus(statususe.succeeded))
             }       

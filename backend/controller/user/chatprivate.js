@@ -10,17 +10,26 @@ export const privatechat = async(req,res)=>{
     FROM chat c
     JOIN chat_members cm ON c.id = cm.chat_id
     WHERE c.type = "private"
+     AND cm.deleted_at IS NULL     
     GROUP BY c.id
     HAVING   
-    COUNT(cm.user_id) = 2 AND
+     COUNT(cm.user_id) = 2 AND
      SUM(cm.user_id IN (?, ?)) = 2;`,[senderid,receiverId]); // check if both sender and receiver are part of the chat   
 
-    if(existingchat.length > 0){
-        return res.status(200).json({
-            message:"chat already exists",
-            chatId: existingchat[0].id
-        })
-    }
+   if(existingchat.length > 0){
+    // fetch the other user's name too
+    const [users] = await db.execute('SELECT id, name FROM users WHERE id=?', [receiverId])
+    const user = users[0]
+
+    return res.status(200).json({
+        data: {                          // ✅ same shape as new chat
+            id: existingchat[0].id,
+            type: "private",
+            otheruserid: receiverId,
+            otherusername: user.name
+        }
+    })
+}
     const [users] = await db.execute(
    'SELECT id,name FROM users WHERE id=?',
    [receiverId]
