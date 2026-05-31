@@ -2,6 +2,8 @@ import React from 'react'
 import { setSelectedchat } from '../store/chatslice'
 import { useDispatch, useSelector } from 'react-redux'
 import {assets} from '../assets/assets'
+import { useEffect ,useState} from 'react'
+import { getSocket } from '../socket'
 
 
 
@@ -13,7 +15,13 @@ const Chatcontainer = () => {
   console.log("selectedchat in Chatcontainer:", selectedchat)
 
   const selectedChatData = chatdata.find(chat => chat.id === selectedchat)
-  console.log("selectedChatData:", selectedChatData)
+  useEffect(() => {
+        if (!selectedchat) return
+        const socket = getSocket()
+        if (!socket) return
+        socket.emit("joinChat", selectedchat)
+    }, [selectedchat])
+
   
    return setSelectedchat? (
     <div className='h-full overflow-y-scroll relative backdrop-blur-lg'>

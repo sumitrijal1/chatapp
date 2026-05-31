@@ -10,6 +10,7 @@ export default function UsersList() {
     const [selectedusers, setSelected] = useState([])  // local selection state
     const [groupname, setGroupname] = useState("")      // group name input
     const [showgroupinput, setShowgroupinput] = useState(false)
+     const { chatdata } = useSelector((state) => state.chat)
 
     useEffect(() => {
         dispatch(fetchUsers())
@@ -60,6 +61,9 @@ export default function UsersList() {
     if (!users || users.length === 0) {
         return <div className="p-3 text-white">No users found</div>
     }
+    useEffect(() => {
+        io.emit("joinchat",{chatId:chatdata.id})
+    }, [chatdata.id])
 
     return (
         <div className="p-3 space-y-2">
