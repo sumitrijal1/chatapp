@@ -5,7 +5,7 @@ import { io, server } from '../../server.js'
 export const sendmessage = async (req, res) => {
 
    const senderid = req.user.id;
-   const{chatid} = req
+   const{chatid} = req.params;
    //reply_to is the message id to which the new message is replying, it can be null if its not a reply
    const { text, image, reply_to = null } = req.body;
 
@@ -33,7 +33,7 @@ export const sendmessage = async (req, res) => {
 
       // insert message
       const [result] = await db.execute(
-         `INSERT INTO message
+         `INSERT INTO messages
          (chat_id, sender_id, content, image_url, reply_to)
          VALUES (?, ?, ?, ?, ?)`,
          [chatid, senderid, text, imageurl, reply_to]
@@ -46,11 +46,12 @@ export const sendmessage = async (req, res) => {
          sender_id: senderid,
          content: text,
          image_url: imageurl,
-         reply_to
+         reply_to,
+         createdAt: new Date()
       };
 
       // socket emit (standard format)
-      req.io.to(`chat:${chatid}`).emit("newMessage", message);
+      io.to(`chat:${chatid}`).emit("newMessage", message);
 
       res.status(201).json({
          success: true,

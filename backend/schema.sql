@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS messages (
     deleted_at   TIMESTAMP NULL,
     forwarded_from INT NULL,
     reply_to     INT NULL,
+    createdAt: new Date() 
     FOREIGN KEY (chat_id) REFERENCES chat(id),
     FOREIGN KEY (sender_id) REFERENCES users(id),
     FOREIGN KEY (forwarded_from) REFERENCES messages(id),

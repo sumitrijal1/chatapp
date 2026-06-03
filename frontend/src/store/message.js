@@ -21,12 +21,15 @@ const messageslice = createSlice({
         },
         setMessageStatus(state,action){
             state.messagestatus = action.payload
+        },
+        setsendmessage(state,action){
+            state.messages.push(action.payload)
         }
 
     }
 })
 
-export const { setMessages, setMessageStatus } = messageslice.actions
+export const { setMessages, setMessageStatus, setsendmessage } = messageslice.actions
 export default messageslice.reducer
  
 export function messagefetch(chatid){
@@ -34,7 +37,7 @@ export function messagefetch(chatid){
         dispatch(setMessageStatus(statususe.loading))
         try{
             const response =  await apiauthen.get(`/message/getallmessages/${chatid}`)
-            dispatch(setMessages(response.data))
+            dispatch(setMessages(response.data.data))
             dispatch(setMessageStatus(statususe.succeeded))
         }
         catch(error){
@@ -48,7 +51,8 @@ export function sendmessage(message,chatid){
     return async function sendmessageThunk(dispatch){
         try{
             const response = await apiauthen.post(`/message/sendmessage/${chatid}`,{message})
-            dispatch(setMessageStatus(statususe.succeeded))
+            dispatch(setsendmessage(response.data.data))
+            
         }
         catch(error){
             console.error('Error sending message:', error)
@@ -57,5 +61,5 @@ export function sendmessage(message,chatid){
     }
 }
 
-c
+
 

@@ -3,9 +3,10 @@ import db from '../../db.js'
 export const getmessage = async(req,res)=>{
     const userid = req.user.id
     const {chatid} = req.params;
+    try{
 
     //check membership of the user in the chat
-    const [membership] = await db.execute(`select * from chat_member where  chat_id=? and user_id=?`,[chatid,userid])
+    const [membership] = await db.execute(`select * from chat_members where  chat_id=? and user_id=?`,[chatid,userid])
 
     if(membership.length === 0){
         return res.status(403).json({
@@ -23,12 +24,12 @@ export const getmessage = async(req,res)=>{
                 ELSE 0 
             END AS is_forwarded
         FROM messages m
-        LEFT JOIN messages_deletes md
+        LEFT JOIN message_deletes md
             ON m.id = md.message_id
             AND md.user_id = ?
         WHERE m.chat_id = ?
         AND m.deleted_at IS NULL
-        AND md.id IS NULL
+        AND md.message_id IS NULL
         ORDER BY m.sent_at ASC
         `,
         [userid, chatid]
@@ -38,4 +39,10 @@ export const getmessage = async(req,res)=>{
         message:"messages fetched successfully",
         data:message
      })
+    }catch(error){
+        console.log(error);
+        res.status(500).json({
+            message:error.message
+        })
+    }
 }

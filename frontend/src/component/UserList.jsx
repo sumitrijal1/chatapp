@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { fetchUsers, createPrivateChat, creategroupChat } from "../store/chatslice";
 import { setSelecteduser } from "../store/chatslice";
 
+
 export default function UsersList() {
     const dispatch = useDispatch()
     const { users, userstatus } = useSelector((state) => state.chat)
@@ -15,6 +16,9 @@ export default function UsersList() {
     useEffect(() => {
         dispatch(fetchUsers())
     }, [dispatch])
+
+
+    
 
     const handleUserClick = (user) => {
         const alreadySelected = selectedusers.find(u => u.id === user.id)
@@ -61,9 +65,7 @@ export default function UsersList() {
     if (!users || users.length === 0) {
         return <div className="p-3 text-white">No users found</div>
     }
-    useEffect(() => {
-        io.emit("joinchat",{chatId:chatdata.id})
-    }, [chatdata.id])
+   
 
     return (
         <div className="p-3 space-y-2">

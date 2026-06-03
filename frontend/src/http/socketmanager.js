@@ -1,23 +1,21 @@
-import {io} from "socket.io-client";
+import { io } from "socket.io-client";
 
 let socket = null;
 
+export const initSocket = (userId) => {
+    socket = io("http://localhost:5000", {
+        query: { userId }
+    });
 
-export const initSocket = (userId)=>{
-    socket =io("http://localhost:5000",{
-        query:{userId}
-    })
     return socket;
-}
-export const subscribeToMessages = ()=>{
-    if(!socket) return; 
+};
 
-export const getSocket = ()=>socket;
-export const disconnectSocket = ()=>{
-    if(socket) socket.disconnect();
+export const getSocket = () => socket;
+
+export const disconnectSocket = () => {
+    if (socket) socket.disconnect();
     socket = null;
-}
-}
+};
 
 // socketmanager.js is like a TEMPLATE
 // copy it to every real time project
