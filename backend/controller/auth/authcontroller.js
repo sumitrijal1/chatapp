@@ -11,15 +11,22 @@ export const register = async (req, res) => {
                 message:"please fill all the fields"
             })
         }
+         let imageurl = null;
+        
+              if (image) {
+                 const uploadresponse = await cloudinary.uploader.upload(image);
+                 imageurl = uploadresponse.secure_url;
+              }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await db.execute(
-            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-            [username, email, hashedPassword]
+            'INSERT INTO users (name, email, password, image) VALUES (?, ?, ?, ?)',
+            [username, email, hashedPassword, imageurl]
         )
         res.status(201).json({
             message: "User registered successfully",
-            userId: result.insertId
+            userId: result.insertId,
+            image: imageurl
         });
     } catch (error) {
         console.error('Register error:', error.message);
@@ -59,7 +66,8 @@ export const login = async(req,res)=>{
         res.json({ token ,user:{
             id:user.id,
             name:user.name,
-            email:user.email
+            email:user.email,
+            image:user.image
         }});
     } catch (error) {
         console.error('Login error:', error.message);

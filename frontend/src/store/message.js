@@ -50,8 +50,8 @@ export function messagefetch(chatid){
 export function sendmessage(message,chatid){
     return async function sendmessageThunk(dispatch){
         try{
-            const response = await apiauthen.post(`/message/sendmessage/${chatid}`,{message})
-            dispatch(setsendmessage(response.data.data))
+            const response = await apiauthen.post(`/message/sendmessage/${chatid}`,message)
+           
             
         }
         catch(error){

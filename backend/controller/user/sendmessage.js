@@ -7,13 +7,13 @@ export const sendmessage = async (req, res) => {
    const senderid = req.user.id;
    const{chatid} = req.params;
    //reply_to is the message id to which the new message is replying, it can be null if its not a reply
-   const { text, image, reply_to = null } = req.body;
+   const { text =null, image =null, reply_to = null } = req.body;
 
 
 
       // check membership
       const [membership] = await db.execute(
-         `SELECT 1 FROM chat_member WHERE chat_id = ? AND user_id = ?`,
+         `SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?`,
          [chatid, senderid]
       );
 
@@ -47,7 +47,8 @@ export const sendmessage = async (req, res) => {
          content: text,
          image_url: imageurl,
          reply_to,
-         createdAt: new Date()
+         sent_at: new Date(),
+         
       };
 
       // socket emit (standard format)
