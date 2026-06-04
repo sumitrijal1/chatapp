@@ -1,7 +1,7 @@
 import { getallusers } from '../../controller/global/globalcontroller.js';
 import { creategroupchat } from '../../controller/user/chatgroup.js';
 import { privatechat } from '../../controller/user/chatprivate.js';
-import { deletechatforme, undodeletechatforme } from '../../controller/user/deletechat.js';
+import { deletechatforme } from '../../controller/user/deletechat.js';
 import { getchat } from '../../controller/user/fetchallchat.js';
 import authenticateToken from '../../middleware/auth.js';
 import catchasync from '../../services/catchasync.js';
@@ -14,6 +14,6 @@ router.route("/users").get(authenticateToken,catchasync(getallusers))
 router.route("/creategroup").post(authenticateToken,catchasync(creategroupchat))
 router.route("/createprivate/:receiverId").post(authenticateToken,catchasync(privatechat))
 router.route("/deletechat/:chatid").patch(authenticateToken,catchasync(deletechatforme))
-router.route("/restorechat/:chatid").patch(authenticateToken,catchasync(undodeletechatforme))
+
 router.route("/fetchchats").get(authenticateToken,getchat)
 export default router;

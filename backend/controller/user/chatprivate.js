@@ -9,14 +9,19 @@ export const privatechat = async(req,res)=>{
     const [existingchat] = await db.execute(`SELECT c.id
     FROM chat c
     JOIN chat_members cm ON c.id = cm.chat_id
-    WHERE c.type = "private"
-     AND cm.deleted_at IS NULL     
+    WHERE c.type = "private"     
     GROUP BY c.id
     HAVING   
      COUNT(cm.user_id) = 2 AND
      SUM(cm.user_id IN (?, ?)) = 2;`,[senderid,receiverId]); // check if both sender and receiver are part of the chat   
 
    if(existingchat.length > 0){
+    await db.execute(`
+        UPDATE chat_members 
+        SET deleted_at = NULL 
+        WHERE chat_id = ? AND user_id = ?
+    `, [existingchat[0].id, senderid]);
+
     // fetch the other user's name too
     const [users] = await db.execute('SELECT id, name FROM users WHERE id=?', [receiverId])
     const user = users[0]
