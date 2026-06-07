@@ -33,7 +33,20 @@ export const getchat = async (req, res) => {
                         LIMIT 1
                     )
                     ELSE NULL
-                END AS otheruserid
+                END AS otheruserid,
+               
+                CASE
+                    WHEN c.type = 'group' THEN (
+                        SELECT GROUP_CONCAT(u.id)
+                        FROM chat_members cm2   
+                        JOIN users u ON u.id = cm2.user_id
+                        WHERE cm2.chat_id = c.id
+                        AND cm2.user_id != ?
+                    )
+                    ELSE NULL
+                END AS groupmembers
+                
+                    
 
             FROM chat c
 
@@ -44,7 +57,7 @@ export const getchat = async (req, res) => {
             AND cm.deleted_at IS NULL
 
             ORDER BY c.id DESC
-        `, [userid, userid, userid]);
+        `, [userid, userid, userid,userid]);
 
         res.status(200).json({
             message: "Chats fetched successfully",

@@ -34,7 +34,8 @@ export const creategroupchat = async(req, res) => {
         data: {
             id: chatid,
             type: "group",
-            name: name
+            name: name,
+            members: allMembers   // ✅ return the list of members in the response
         }
     })
 }

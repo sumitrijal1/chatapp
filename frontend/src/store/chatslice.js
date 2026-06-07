@@ -43,15 +43,15 @@ const chatslice = createSlice({
     deleteChat(state,action){ 
         state.chatdata = state.chatdata.filter(chat => chat.id !== action.payload.chatId)
     },
-    addChat(state,action){
-    const exists = state.chatdata.find(
-        chat => chat.id === action.payload.id
-    )
+//     addChat(state,action){
+//     const exists = state.chatdata.find(
+//         chat => chat.id === action.payload.id
+//     )
 
-    if(!exists){
-        state.chatdata.push(action.payload)
-    }
-}
+//     if(!exists){
+//         state.chatdata.push(action.payload)
+//     }
+// }
    
 
   }
@@ -79,7 +79,7 @@ const chatslice = createSlice({
             dispatch(setchatStatus(statususe.loading))
             try{
                 const response = await apiauthen.post("/chat/creategroup",data)
-                dispatch(addChat(response.data.data))
+                await dispatch(fetchChats())  
                 dispatch(setchatStatus(statususe.succeeded))
             }catch(error){
                 dispatch(setchatStatus(statususe.failed))
@@ -94,7 +94,7 @@ const chatslice = createSlice({
                 console.log("response from create private chat:", response.data.data)
                  console.log("full response:", response.data) // 👈 log the full response
                 console.log("chatdata before add:", store.getState().chat.chatdata) // check existing IDs
-                dispatch(addChat(response.data.data))
+                await dispatch(fetchChats())
                 dispatch(setchatStatus(statususe.succeeded))
             }       
             catch(error){

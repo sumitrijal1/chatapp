@@ -20,6 +20,7 @@ const Chatcontainer = () => {
   const [input, setInput] = useState("")
   const scrollend = useRef()
   const [selectedImage, setSelectedImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null)
 
   const selectedChatData = chatdata.find(chat => chat.id === selectedchat)
 
@@ -60,70 +61,78 @@ const Chatcontainer = () => {
       toast.error("select an image file")
       return
     }
-    const reader = new FileReader(); //A FileReader is a browser object that can read file contents.
-//     Hard Drive
-//       ↓
-//    FileReader
-//       ↓
-// J  avaScript
-     reader.onload = () => {
-    setSelectedImage(reader.result);
-  };
-
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImage(reader.result);
+      setPreviewImage(reader.result);
+    };
     reader.readAsDataURL(file)
   }
 
- const handlesendmessage = () => {
-  if (!input.trim() && !selectedImage) return;
+  const handlesendmessage = () => {
+    if (!input.trim() && !selectedImage) return;
 
-  dispatch(
-    sendmessage(
-      {
-        text: input,
-        image: selectedImage,
-      },
-      selectedchat
-    )
-  );
+    dispatch(
+      sendmessage(
+        {
+          text: input,
+          image: selectedImage,
+        },
+        selectedchat
+      )
+    );
 
-  setInput("");
-  setSelectedImage(null);
-};
-  console.log(messages)
+    setInput("");
+    setSelectedImage(null);
+    setPreviewImage(null);
+  };
 
+  console.log(selectedChatData)
+  console.log(onlineusers)
+  {console.log("online:", onlineusers, "checking id:", selectedChatData?.otheruserid || selectedChatData?.userId)}
+//   DB returns       → "1,2,4"          (string)
+// .split(",")      → ["1","2","4"]    (array)
+// .some()          → loops each one   (boolean)
+// .includes()      → checks against onlineusers
 
   return selectedChatData ? (
     <div className='h-full overflow-y-scroll relative backdrop-blur-lg bg-gray-900'>
       {/* header */}
       <div className='flex items-center gap-3 py-3 mx-4 border-b border-stone-500'>
-        <img src={selectedChatData?.otheruseravatar || selectedChatData?.avatar} alt="" className='w-8 rounded-full' />
-        <p className='flex-1 text-lg text-white flex items-center gap-2'>
-          {selectedChatData?.type === "private" ? selectedChatData?.otherusername : selectedChatData?.name}
-          {onlineusers.includes(selectedChatData?.otheruserId || selectedChatData?.userId) ? (
-            <span className='w-2 h-2 rounded-full bg-green-500 ml-2'></span>
-          ) : null}
-        </p>
-        {/* ✅ Fixed: back button dispatches setSelectedchat(null) */}
-        <img onClick={() => dispatch(setSelectedchat(null))} src={assets.arrow_icon} alt="" className='md:hidden max-w-7' />
-        <img src={assets.help_icon} alt="" className='max-md:hidden max-w-5' />
-      </div>
+  <img src={selectedChatData?.otheruseravatar || selectedChatData?.avatar} alt="" className='w-8 rounded-full' />
+  <p className='flex-1 text-lg text-white flex items-center gap-2'>
+    {selectedChatData?.type === "private" ? selectedChatData?.otherusername : selectedChatData?.name}
+    {selectedChatData?.type === "private" ? (
+      onlineusers.includes(selectedChatData?.otheruserid?.toString() || selectedChatData?.userId) ? (
+        <span className='w-2 h-2 rounded-full bg-green-500 ml-2'></span>
+      ) : null
+    ) : null}
+    {/* Group chat - check if ANY member is online */}
+{selectedChatData?.type === "group" ? (
+  selectedChatData?.groupmembers?.split(",").some(memberId =>
+    onlineusers.includes(memberId.toString())
+  ) ? (
+    <span className='w-2 h-2 rounded-full bg-green-500 ml-2'></span>
+  ) : null
+) : null}
+  </p>
+  <img onClick={() => dispatch(setSelectedchat(null))} src={assets.arrow_icon} alt="" className='md:hidden max-w-7' />
+  <img src={assets.help_icon} alt="" className='max-md:hidden max-w-5' />
+</div>
 
       {/* chat area */}
       <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
         {messages?.map((msg, index) => (
-          // ✅ Fixed: use sender_id to check message ownership
           <div key={index} className={`flex items-end gap-2 justify-end ${msg.sender_id !== data.id && 'flex-row-reverse'}`}>
             {msg.image_url ? (
               <img src={msg.image_url} className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8' />
             ) : (
-              // ✅ Fixed: use sender_id for bubble alignment
               <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white 
                 ${msg.sender_id === data.id ? 'rounded-br-none' : 'rounded-bl-none'}`}>
                 {msg.content}
               </p>
             )}
             <div className='text-center text-xs'>
-              {/* ✅ Fixed: use sender_id for avatar */}
               <img src={msg.sender_id === data.id ? data?.profilepic || assets.avatar_icon : selectedChatData?.otheruseravatar || assets.profile_martin} alt="" className='w-7 rounded-full' />
               <p className='text-gray-500'>{formatmessagetime(msg.sent_at)}</p>
             </div>
@@ -133,23 +142,50 @@ const Chatcontainer = () => {
       </div>
 
       {/* bottom area */}
-      <div className='absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3 bg-gray-900'>
-        <div className='flex-1 flex items-center bg-gray-100/12 px-3 rounded-full'>
-          <input
-            onChange={(e) => setInput(e.target.value)}
-            value={input}
-            onKeyDown={(e) => e.key === 'Enter' ? handlesendmessage(e) : null}
-            type="text"
-            placeholder='send a message'
-            // ✅ Fixed: text-shite → text-white, added bg-transparent
-            className='flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400 bg-transparent'
-          />
-          <input onChange={handlesendimage}  value={selectedImage} type="file" id='image' accept='image/png, image/jpeg' hidden />
-          <label htmlFor="image">
-            <img src={assets.gallery_icon} alt="" className='w-5 mr-2 cursor-pointer' />
-          </label>
+      <div className='absolute bottom-0 left-0 right-0 bg-gray-900'>
+
+        {/* ✅ Image preview shown ABOVE the input box */}
+        {previewImage && (
+          <div className='px-4 pt-2'>
+            <div className='relative inline-block'>
+              <img
+                src={previewImage}
+                alt="preview"
+                className='w-16 h-16 rounded-lg object-cover border border-gray-600'
+              />
+              {/* ❌ Remove selected image */}
+              <button
+                onClick={() => {
+                  setPreviewImage(null);
+                  setSelectedImage(null);
+                }}
+                className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center cursor-pointer'
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* input row */}
+        <div className='flex items-center gap-3 p-3'>
+          <div className='flex-1 flex items-center bg-gray-100/12 px-3 rounded-full'>
+            <input
+              onChange={(e) => setInput(e.target.value)}
+              value={input}
+              onKeyDown={(e) => e.key === 'Enter' ? handlesendmessage(e) : null}
+              type="text"
+              placeholder='send a message'
+              className='flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400 bg-transparent'
+            />
+            <input onChange={handlesendimage} type="file" id='image' accept='image/png, image/jpeg' hidden />
+            <label htmlFor="image">
+              <img src={assets.gallery_icon} alt="" className='w-5 mr-2 cursor-pointer' />
+            </label>
+          </div>
+          <img onClick={handlesendmessage} src={assets.send_button} alt="" className='w-7 cursor-pointer' />
         </div>
-        <img onClick={handlesendmessage} src={assets.send_button} alt="" className='w-7 cursor-pointer' />
+
       </div>
     </div>
   ) : (
