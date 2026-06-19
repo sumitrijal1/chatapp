@@ -1,4 +1,5 @@
 import db from '../../db.js'
+import { executeWithRetry } from '../../services/dbretry.js'
 
 export const creategroupchat = async(req, res) => {
     console.log("CHATGROUP FILE LOADED v2")  // ← very first line
@@ -13,21 +14,31 @@ export const creategroupchat = async(req, res) => {
         return res.status(400).json({ message: "please provide a list of users for the group chat" })
     }
 
+    try {
     // step 1 - create group
-    const [chatresult] = await db.execute(
+    const [chatresult] = await executeWithRetry(db,
         'INSERT INTO chat(type, name) VALUES(?, ?)',
         ['group', name]
     )
     const chatid = chatresult.insertId
 
     // step 2 - insert members one by one ✅
-    const allMembers = [...receiverId, userid]
+    const allMembers = [...new Set([...receiverId, userid])]
 
     for(const memberId of allMembers) {
-        await db.execute(
+        await executeWithRetry(db,
             'INSERT INTO chat_members(chat_id, user_id) VALUES(?, ?)',
             [chatid, Number(memberId)]    // ✅ ensure number not string
         )
+    }
+
+    const listofuser = []
+    for(const memberId of allMembers) {
+        const [rows] = await executeWithRetry(db,
+            'SELECT id, name FROM users WHERE id=?',
+            [Number(memberId)]
+        )
+        if (rows.length) listofuser.push(rows[0])
     }
 
     res.status(201).json({
@@ -35,11 +46,37 @@ export const creategroupchat = async(req, res) => {
             id: chatid,
             type: "group",
             name: name,
-            members: allMembers   // ✅ return the list of members in the response
+            members: listofuser   // ✅ return the list of members in the response
         }
     })
+    } catch (error) {
+        console.error('Error in creategroupchat:', error.message);
+        res.status(500).json({ message: error.message || "Failed to create group" });
+    }
 }
 
+export const addmember = async (req, res) => {
+    const userid = req.user.id
+    const { receiverid, name } = req.body  // name = chatId here
+
+
+    if (!receiverid || !Array.isArray(receiverid)) {
+        return res.status(400).json({ message: "please provide a list of users" })
+    }
+
+    try {
+        for (const memberId of receiverid) {
+            await executeWithRetry(db,
+                'INSERT INTO chat_members(chat_id, user_id) VALUES(?, ?)',
+                [name, Number(memberId)]
+            )
+        }
+        res.status(200).json({ message: "members added successfully" })  // ✅ moved outside loop
+    } catch (error) {
+        console.error('Error in addmember:', error.message);
+        res.status(500).json({ message: "failed to add members", error: error.message })
+    }
+}
 
 
 

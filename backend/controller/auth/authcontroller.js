@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from "../../db.js";
+import { executeWithRetry } from "../../services/dbretry.js";
 
 
 export const register = async (req, res) => {
@@ -19,7 +20,7 @@ export const register = async (req, res) => {
               }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const [result] = await db.execute(
+        const [result] = await executeWithRetry(db,
             'INSERT INTO users (name, email, password, image) VALUES (?, ?, ?, ?)',
             [username, email, hashedPassword, imageurl]
         )
@@ -46,7 +47,7 @@ export const login = async(req,res)=>{
             })
         }
 
-        const [rows] = await db.execute('SELECT * FROM users WHERE email =?',[email])
+        const [rows] = await executeWithRetry(db, 'SELECT * FROM users WHERE email =?',[email])
         if(!rows.length){
             return res.status(401).json({
                 message:"Invalid email or password"

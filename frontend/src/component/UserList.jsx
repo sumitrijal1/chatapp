@@ -3,9 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { fetchUsers, createPrivateChat, creategroupChat } from "../store/chatslice";
 import { setSelecteduser } from "../store/chatslice";
+import { addMembersToGroupChat } from "../store/chatslice";
 
 
-export default function UsersList() {
+export default function UsersList({mode ="default",chatId =null,chatType =null,otherUserId =null, onClose= null}) {
     const dispatch = useDispatch()
     const { users, userstatus } = useSelector((state) => state.chat)
     const [selectedusers, setSelected] = useState([])  // local selection state
@@ -35,6 +36,26 @@ export default function UsersList() {
     const handleCreateChat = () => {
         if (selectedusers.length === 0) return
 
+        if (mode === "addmember" && chatId) {
+        if (chatType === "group") {
+            // ✅ group chat → add members directly
+            dispatch(addMembersToGroupChat(chatId, selectedusers.map(u => u.id)))
+            setSelected([])
+            if (onClose) onClose()
+        } else {
+            // ✅ private chat → need group name to convert to group
+                        const newMembers = selectedusers.filter(u => u.id !== Number(otherUserId))
+            if (newMembers.length === 0) {
+                alert("Please select at least one new member to create a group")
+                return  // ✅ stop here, don't create group
+            }
+
+            setShowgroupinput(true)
+        }
+        return
+    }
+
+
         if (selectedusers.length === 1) {
             // ✅ single user → private chat
             dispatch(createPrivateChat(selectedusers[0].id))
@@ -45,18 +66,26 @@ export default function UsersList() {
         }
     }
 
-    const handleCreateGroup = () => {
-        if (!groupname.trim()) return
+const handleCreateGroup = () => {
+    if (!groupname.trim()) return
 
-        // ✅ create group chat
+    if (mode === "addmember" && chatType === "private") {
+        dispatch(creategroupChat({
+            name: groupname,
+           receiverId: [...new Set([...selectedusers.map(u => u.id), Number(otherUserId)])]
+        }))
+    } else {
         dispatch(creategroupChat({
             name: groupname,
             receiverId: selectedusers.map(u => u.id)
         }))
-        setSelected([])          // clear selection
-        setGroupname("")         // clear input
-        setShowgroupinput(false) // hide input
     }
+
+    setSelected([])
+    setGroupname("")
+    setShowgroupinput(false)
+    if (onClose) onClose()
+}
 
     if (userstatus === "loading") {
         return <div className="p-3 text-white">Loading users...</div>
@@ -78,7 +107,7 @@ export default function UsersList() {
                     </p>
 
                     {/* ✅ group name input — only shows for 2+ users */}
-                    {showgroupinput && (
+                    {showgroupinput && (mode !== "addmember" || chatType === "private")  && (
                         <div className="flex gap-2 mb-2">
                             <input
                                 type="text"
@@ -94,13 +123,14 @@ export default function UsersList() {
                                 Create
                             </button>
                         </div>
-                    )}
+                    )} 
 
                     <button
                         onClick={handleCreateChat}
                         className="w-full p-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg"
                     >
-                        {selectedusers.length === 1 ? "Start Private Chat" : "Create Group Chat"}
+                            {mode === "addmember" ? "Add members" : selectedusers.length === 1 ? "Start Private Chat" : "Create Group Chat"}
+                        
                     </button>
                 </div>
             )}
@@ -128,3 +158,14 @@ export default function UsersList() {
         </div>
     )
 }
+
+// // normal array — allows duplicates
+// const arr = [1, 2, 2, 3, 3, 3]
+// console.log(arr)  // [1, 2, 2, 3, 3, 3]
+
+// // Set — removes duplicates automatically
+// const set = new Set([1, 2, 2, 3, 3, 3])
+// console.log(set)  // {1, 2, 3}
+
+// const unique = [...new Set([1, 2, 2, 3, 3, 3])]
+// console.log(unique)  // [1, 2, 3]  ✅ array again

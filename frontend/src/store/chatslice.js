@@ -129,4 +129,20 @@ const chatslice = createSlice({
                 dispatch(setuserStatus(statususe.failed))
             }
         }
-    }   
+    } 
+    
+    export function addMembersToGroupChat(chatId, memberIds){
+        return async function addMembersToGroupChatThunk(dispatch){
+            dispatch(setchatStatus(statususe.loading))
+            try{
+                await apiauthen.post("/chat/addmember", {
+                    name: chatId,
+                    receiverid: memberIds 
+                })
+                await dispatch(fetchChats())  
+                dispatch(setchatStatus(statususe.succeeded))
+            }catch(error){
+                dispatch(setchatStatus(statususe.failed))
+            }   
+        }
+    }

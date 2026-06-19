@@ -1,8 +1,9 @@
 import db from "../../db.js";
+import { executeWithRetry } from "../../services/dbretry.js";
 import { io } from "../../server.js";
 
 export const forwardMessage = async (req, res) => {
-
+   try {
    const senderId = req.user.id;
 
    const {
@@ -17,7 +18,7 @@ export const forwardMessage = async (req, res) => {
       // 1. FETCH ORIGINAL MESSAGES
       // =========================================
 
-      const [messages] = await db.execute(
+      const [messages] = await executeWithRetry(db,
          `
          SELECT *
          FROM message
@@ -39,7 +40,7 @@ export const forwardMessage = async (req, res) => {
          // CHECK EXISTING PRIVATE CHAT
          // -------------------------------------
 
-         const [existingChats] = await db.execute(
+         const [existingChats] = await executeWithRetry(db,
             `
             SELECT c.id
             FROM chat c
@@ -73,7 +74,7 @@ export const forwardMessage = async (req, res) => {
             // CREATE NEW PRIVATE CHAT
             // ----------------------------------
 
-            const [chatResult] = await db.execute(
+            const [chatResult] = await executeWithRetry(db,
                `
                INSERT INTO chat(type)
                VALUES ('private')
@@ -84,7 +85,7 @@ export const forwardMessage = async (req, res) => {
 
             // add members
 
-            await db.execute(
+            await executeWithRetry(db,
                `
                INSERT INTO chat_member(chat_id, user_id)
                VALUES (?, ?), (?, ?)
@@ -118,7 +119,7 @@ export const forwardMessage = async (req, res) => {
 
          for (const msg of messages) {
 
-            const [result] = await db.execute(
+            const [result] = await executeWithRetry(db,
                `
                INSERT INTO message
                (
@@ -164,6 +165,8 @@ export const forwardMessage = async (req, res) => {
       res.json({
          success: true
       });
-
-  
+   } catch (error) {
+        console.error('Error in forwardMessage:', error.message);
+        res.status(500).json({ message: error.message || "Failed to forward message" });
+   }
 };

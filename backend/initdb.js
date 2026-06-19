@@ -50,3 +50,5 @@ connection.connect((err) => {
     });
   });
 });
+// schema.sql is the message, initdb.js is the courier (written in Node.js) that delivers it to MySQL, and 
+// MySQL is the one who reads the message and acts on it (creating the database and tables)

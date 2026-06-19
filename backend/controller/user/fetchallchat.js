@@ -1,11 +1,12 @@
 import db from "../../db.js";
+import { executeWithRetry } from "../../services/dbretry.js";
 
 export const getchat = async (req, res) => {
     const userid = req.user.id;
 
     try {
 
-        const [chats] = await db.execute(`
+        const [chats] = await executeWithRetry(db, `
             SELECT
                 c.id,
                 c.type,
@@ -37,15 +38,25 @@ export const getchat = async (req, res) => {
                
                 CASE
                     WHEN c.type = 'group' THEN (
-                        SELECT GROUP_CONCAT(u.id)
+                        SELECT GROUP_CONCAT(u.id) 
                         FROM chat_members cm2   
                         JOIN users u ON u.id = cm2.user_id
                         WHERE cm2.chat_id = c.id
                         AND cm2.user_id != ?
                     )
                     ELSE NULL
-                END AS groupmembers
+                END AS groupmembers,
                 
+                CASE
+    WHEN c.type = 'group' THEN (
+        SELECT GROUP_CONCAT(u.name)
+        FROM chat_members cm2   
+        JOIN users u ON u.id = cm2.user_id
+        WHERE cm2.chat_id = c.id
+        AND cm2.user_id != ?
+    )
+    ELSE NULL
+END AS groupmembernames
                     
 
             FROM chat c
@@ -57,7 +68,7 @@ export const getchat = async (req, res) => {
             AND cm.deleted_at IS NULL
 
             ORDER BY c.id DESC
-        `, [userid, userid, userid,userid]);
+        `, [userid, userid, userid,userid,userid]);
 
         res.status(200).json({
             message: "Chats fetched successfully",

@@ -26,6 +26,7 @@ const App = () => {
            <Route path="/" element={<Homepage />} />
            <Route path="/profile" element={<Profilepage />} />
            
+           
 
           
          </Route>

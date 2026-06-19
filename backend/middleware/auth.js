@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import {promisify} from 'util';
-import db from "../db.js";    
+import db from "../db.js";
+import { executeWithRetry } from '../services/dbretry.js';    
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -18,13 +19,14 @@ const authenticateToken = async(req, res, next) => {
 
     try {
         const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-        const [doesuserexist] = await db.execute('SELECT * FROM users WHERE id = ?', [decoded.id]);
+        const [doesuserexist] = await executeWithRetry(db, 'SELECT * FROM users WHERE id = ?', [decoded.id]);
         if(!doesuserexist.length){
             return res.status(401).json({ message: "Invalid token. User does not exist." });
         }
         req.user = doesuserexist[0]; 
         next();
     } catch (error) {
+        console.error('Auth error:', error.message)
         return res.status(401).json({ message: "Invalid token." });
     }
 

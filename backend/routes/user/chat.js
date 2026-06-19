@@ -1,5 +1,5 @@
 import { getallusers } from '../../controller/global/globalcontroller.js';
-import { creategroupchat } from '../../controller/user/chatgroup.js';
+import { addmember, creategroupchat } from '../../controller/user/chatgroup.js';
 import { privatechat } from '../../controller/user/chatprivate.js';
 import { deletechatforme } from '../../controller/user/deletechat.js';
 import { getchat } from '../../controller/user/fetchallchat.js';
@@ -12,6 +12,7 @@ import express from 'express';
 const router = express.Router();
 router.route("/users").get(authenticateToken,catchasync(getallusers))
 router.route("/creategroup").post(authenticateToken,catchasync(creategroupchat))
+router.route("/addmember").post(authenticateToken,catchasync(addmember))
 router.route("/createprivate/:receiverId").post(authenticateToken,catchasync(privatechat))
 router.route("/deletechat/:chatid").patch(authenticateToken,catchasync(deletechatforme))
 

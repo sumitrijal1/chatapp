@@ -1,9 +1,10 @@
 import db from '../../db.js'
+import { executeWithRetry } from '../../services/dbretry.js'
 import cloudinary from '../../services/cloudinary.js'
 import { io, server } from '../../server.js'
 
 export const sendmessage = async (req, res) => {
-
+   try {
    const senderid = req.user.id;
    const{chatid} = req.params;
    //reply_to is the message id to which the new message is replying, it can be null if its not a reply
@@ -12,7 +13,7 @@ export const sendmessage = async (req, res) => {
 
 
       // check membership
-      const [membership] = await db.execute(
+      const [membership] = await executeWithRetry(db,
          `SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?`,
          [chatid, senderid]
       );
@@ -32,7 +33,7 @@ export const sendmessage = async (req, res) => {
       }
 
       // insert message
-      const [result] = await db.execute(
+      const [result] = await executeWithRetry(db,
          `INSERT INTO messages
          (chat_id, sender_id, content, image_url, reply_to)
          VALUES (?, ?, ?, ?, ?)`,
@@ -58,6 +59,8 @@ export const sendmessage = async (req, res) => {
          success: true,
          data: message
       });
-
-   
+    } catch (error) {
+        console.error('Error in sendmessage:', error.message);
+        res.status(500).json({ message: error.message || "Failed to send message" });
+    }
 };

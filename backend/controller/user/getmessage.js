@@ -1,4 +1,5 @@
 import db from '../../db.js'
+import { executeWithRetry } from '../../services/dbretry.js'
 
 export const getmessage = async(req,res)=>{
     const userid = req.user.id
@@ -6,7 +7,7 @@ export const getmessage = async(req,res)=>{
     try{
 
     //check membership of the user in the chat
-    const [membership] = await db.execute(`select * from chat_members where  chat_id=? and user_id=?`,[chatid,userid])
+    const [membership] = await executeWithRetry(db, `select * from chat_members where  chat_id=? and user_id=?`,[chatid,userid])
 
     if(membership.length === 0){
         return res.status(403).json({
@@ -15,7 +16,7 @@ export const getmessage = async(req,res)=>{
     }   
     //fetch messages of the chat
      // fetch messages with BOTH delete rules
-     const [message] = await db.execute(
+     const [message] = await executeWithRetry(db, 
         `
         SELECT 
             m.*,
