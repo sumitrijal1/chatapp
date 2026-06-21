@@ -1,5 +1,7 @@
 import db from '../../db.js'
 import { executeWithRetry } from '../../services/dbretry.js'
+import { io } from '../../server.js'
+
 
 export const deletemessageforme = async (req,res)=>{
     const userid = req.user.id 
@@ -16,7 +18,7 @@ export const deletemessageforme = async (req,res)=>{
 
     const resultmessage = message[0]
         //check membership of the user in the chat
-        const [ membership] = await executeWithRetry(db, `select * from chat_member where chat_id = ? and user_id =?`,[resultmessage.chat_id,userid])
+        const [ membership] = await executeWithRetry(db, `select * from chat_members where chat_id = ? and user_id =?`,[resultmessage.chat_id,userid])
 
      if(membership.length === 0){
         return res.status(403).json({
@@ -24,7 +26,7 @@ export const deletemessageforme = async (req,res)=>{
         })
     }
     //prevent duplicate deletion
-    const [existingdelete] = await executeWithRetry(db, `select * from messages_deletes where message_id =? and user_id =?`,[messageid,userid])
+    const [existingdelete] = await executeWithRetry(db, `select * from message_deletes where message_id =? and user_id =?`,[messageid,userid])
     if(existingdelete.length > 0){
         return res.status(400).json({   
             message:"you have already deleted this message"
@@ -34,7 +36,7 @@ export const deletemessageforme = async (req,res)=>{
 
 
     //delete the message for the user
-    await executeWithRetry(db, 'insert into messages_deletes(message_id,user_id) values (?,?)',[messageid,userid])
+    await executeWithRetry(db, 'insert into message_deletes(message_id,user_id) values (?,?)',[messageid,userid])
     
 
     res.status(200).json({
@@ -50,7 +52,7 @@ export const deletemessageforme = async (req,res)=>{
 
 export const deleteforeveryone = async (req, res) => {
     const userid = req.user.id;
-    const { messageid } = req.params;
+    const { messageid ,chatid} = req.params;
 
     try {
     // check message exists and user is sender
@@ -79,9 +81,15 @@ export const deleteforeveryone = async (req, res) => {
         `UPDATE messages SET deleted_at = NOW() WHERE id = ?`,
         [messageid]
     );
+    io.to(`chat:${msg.chat_id}`).emit('messagedeleted',{
+        messageId:messageid,
+        chatId:msg.chat_id
+    })
 
     res.status(200).json({
-        message: "message deleted for everyone successfully"
+        messagetodisplay: "message deleted for everyone successfully",
+        messgage: msg // send original content so frontend can show "this message was deleted" without refetching
+        
     });
     } catch (error) {
         console.error('Error in deleteforeveryone:', error.message);
@@ -89,47 +97,9 @@ export const deleteforeveryone = async (req, res) => {
     }
 };
 
-export const undodelteforeveryone = async (req, res) => {
-    const userid = req.user.id;
-    const { messageid } = req.params;
+// ❌ Wrong way:
+// Change in DB → tell frontend → frontend goes and fetches → slow!
 
-    try {
-    const [message] = await executeWithRetry(db,
-        `SELECT * FROM messages WHERE id = ? AND sender_id = ?`,
-        [messageid, userid]
-    );
+// ✅ Right way:
+// Change in DB → backend fetches → sends to frontend directly → fast!
 
-    if (message.length === 0) {
-        return res.status(404).json({
-            message: "message not found or you are not the sender"
-        });
-    }
-
-    const msg = message[0];
-
-    if (!msg.deleted_at) {
-        return res.status(400).json({
-            message: "message is not deleted"
-        });
-    }
-  // restore the message by setting deleted_at to NULL
-// only restore if it was previously deleted
-    const [result] = await executeWithRetry(db,
-        `UPDATE messages SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL`,
-        [messageid]
-    );
-  // check if any row was updated
-    if (result.affectedRows === 0) {
-        return res.status(400).json({
-            message: "failed to restore message"
-        });
-    }
-
-    res.status(200).json({
-        message: "message restored for everyone successfully"
-    });
-    } catch (error) {
-        console.error('Error in undodelteforeveryone:', error.message);
-        res.status(500).json({ message: error.message || "Failed to restore message" });
-    }
-};

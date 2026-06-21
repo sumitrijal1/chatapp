@@ -29,7 +29,6 @@ export const getmessage = async(req,res)=>{
             ON m.id = md.message_id
             AND md.user_id = ?
         WHERE m.chat_id = ?
-        AND m.deleted_at IS NULL
         AND md.message_id IS NULL
         ORDER BY m.sent_at ASC
         `,
@@ -47,3 +46,5 @@ export const getmessage = async(req,res)=>{
         })
     }
 }
+// Always fetch in backend → send through socket
+// Never fetch in frontend after socket event
