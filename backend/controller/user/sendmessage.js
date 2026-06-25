@@ -1,7 +1,7 @@
 import db from '../../db.js'
 import { executeWithRetry } from '../../services/dbretry.js'
 import cloudinary from '../../services/cloudinary.js'
-import { io, server } from '../../server.js'
+import { getIo } from '../../services/socket.js'
 
 export const sendmessage = async (req, res) => {
    try {
@@ -53,6 +53,7 @@ export const sendmessage = async (req, res) => {
       };
 
       // socket emit (standard format)
+      const io=getIo()
       io.to(`chat:${chatid}`).emit("newMessage", message);
 
       res.status(201).json({

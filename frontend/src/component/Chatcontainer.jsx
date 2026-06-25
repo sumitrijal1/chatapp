@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import assets from '../assets/assets'
 import { useEffect, useState } from 'react'
 import { getSocket } from '../http/socketmanager'
-import { markmessagedeleted, setsendmessage } from '../store/message'
+import { markmessagedeleted, setMessages, setsendmessage } from '../store/message'
 import { messagefetch } from '../store/message'
 import { formatmessagetime } from '../http/utils'
 import { useRef } from 'react'
@@ -22,7 +22,6 @@ const Chatcontainer = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { selectedchat, chatdata } = useSelector((state) => state.chat)
-  
   const { onlineusers } = useSelector((state) => state.auth)
   const { messages } = useSelector((state) => state.message)
   const { data } = useSelector((state) => state.auth)
@@ -34,6 +33,9 @@ const Chatcontainer = () => {
   const [showAddMembers, setShowAddMembers] = useState(false)
   const [openMenuId, setOpenMenuId] = useState(null)
   const [selectedmessage, setSelectedmessage] = useState(null)
+  const [replyToMessage, setReplyToMessage] = useState(null)
+  
+ 
 
   const selectedChatData = chatdata.find(chat => chat.id === selectedchat)
 
@@ -50,16 +52,16 @@ const Chatcontainer = () => {
     }
   }, [messages])
 
-  useEffect(()=>{
+  useEffect(() => {
     const socket = getSocket();
-    if(!socket) return ;
+    if (!socket) return;
 
-    const handlemessagedeleted=({messageId})=>{
+    const handlemessagedeleted = ({ messageId }) => {
       dispatch(markmessagedeleted(messageId))
     }
-    socket.on("messagedeleted",handlemessagedeleted)
-    return () => socket.off("messagedeleted",handlemessagedeleted)
-  },[dispatch])
+    socket.on("messagedeleted", handlemessagedeleted)
+    return () => socket.off("messagedeleted", handlemessagedeleted)
+  }, [dispatch])
 
   useEffect(() => {
     if (selectedchat) {
@@ -83,21 +85,17 @@ const Chatcontainer = () => {
     if (openMenuId === null) return
 
     const handleClickOutside = (e) => {
-      // ✅ FIX: now correctly detects clicks outside the menu wrapper
       if (!e.target.closest('.message-menu-wrapper')) {
         setOpenMenuId(null)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openMenuId])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // ✅ FIX: use 'header-options' class, not 'message-menu-wrapper'
-      // message-menu-wrapper was blocking this from working when messages exist
       if (!e.target.closest('.header-options')) {
         setShowoptions(false)
       }
@@ -129,6 +127,7 @@ const Chatcontainer = () => {
         {
           text: input,
           image: selectedImage,
+          reply_to:  replyToMessage?.id ?? null 
         },
         selectedchat
       )
@@ -137,6 +136,8 @@ const Chatcontainer = () => {
     setInput("");
     setSelectedImage(null);
     setPreviewImage(null);
+    setReplyToMessage(null);
+
   };
 
   const handleshowmembers = () => {
@@ -152,10 +153,14 @@ const Chatcontainer = () => {
     setOpenMenuId(openMenuId === id ? null : id)
   }
 
+  const handlereply = (msg) => {
+    setOpenMenuId(null)
+    setReplyToMessage(msg)
+  }
+
   return selectedChatData ? (
     <div className='h-full overflow-y-scroll relative backdrop-blur-lg bg-gray-900'>
       {/* header */}
-      {/* ✅ FIX: z-10 added so header stays above scrollable chat area */}
       <div className='flex items-center gap-3 py-3 mx-4 border-b border-stone-500 relative z-10 bg-gray-900'>
         <img src={selectedChatData?.otheruseravatar || selectedChatData?.avatar} alt="" className='w-8 rounded-full' />
         <p className='flex-1 text-lg text-white flex items-center gap-2'>
@@ -226,26 +231,29 @@ const Chatcontainer = () => {
               ) : (
                 <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white 
                   ${msg.sender_id === data.id ? 'rounded-br-none' : 'rounded-bl-none'}`}>
-                  {msg.deleted_at  ? (<span className="text-gray-500 italic">This message was deleted</span>) : msg.content}
-                  
+                  {msg.reply_to && (
+    <span className='block text-xs text-gray-400 border-l-2 border-violet-400 pl-2 mb-1'>
+      {messages.find(m => m.id === msg.reply_to)?.content || "deleted message"}
+    </span>
+  )}
+
+
+
+                  {msg.deleted_at ? (<span className="text-gray-500 italic">This message was deleted</span>) : msg.content}
                 </p>
               )}
 
-              {/* ✅ FIX: added 'message-menu-wrapper' class so handleClickOutside knows this is inside the menu */}
               {openMenuId === msg.id && (
                 <div className={`message-menu-wrapper absolute top-0 ${msg.sender_id === data.id ? 'right-full mr-2' : 'left-full ml-2'} bg-gray-800 rounded-lg p-2 w-32 flex flex-col gap-2 z-20 text-white text-sm shadow-lg`}>
-                  <div>
-                     <DeleteMessage  messageid={msg.id} chatid={selectedChatData.id} onClose={()=>setOpenMenuId(null)} />
+                  <div >
+                    <DeleteMessage messageid={msg.id} chatid={selectedChatData.id}   onClose={() => setOpenMenuId(null)} />
                   </div>
-                  <div onClick={()=>setOpenMenuId(null)}>
-                  <Reply />
+                  <div onClick={() => handlereply(msg)}>
+                    <p className="text-white cursor-pointer">Reply</p>
                   </div>
-                  <div onClick={()=>setOpenMenuId(null)}>
+                  <div onClick={() => setOpenMenuId(null)}>
                     <ForwardMessage />
                   </div>
-                 
-                  
-                 
                 </div>
               )}
             </div>
@@ -258,9 +266,9 @@ const Chatcontainer = () => {
               />
               <p className='text-gray-500'>{formatmessagetime(msg.sent_at)}</p>
             </div>
-
-            {/* ✅ FIX: added 'message-menu-wrapper' class so clicking three dots doesn't trigger outside click handler */}
-            <button
+           {msg.deleted_at ?
+            null
+            : <button
               onClick={() => handlebuttonclick(msg.id)}
               className="message-menu-wrapper self-center p-1 mb-8 rounded-full hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 order-first"
             >
@@ -274,7 +282,8 @@ const Chatcontainer = () => {
                 <circle cx="12" cy="12" r="2" />
                 <circle cx="12" cy="19" r="2" />
               </svg>
-            </button>
+            </button>}
+            
           </div>
         ))}
         <div ref={scrollend}></div>
@@ -300,6 +309,17 @@ const Chatcontainer = () => {
                 ✕
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Reply preview */}
+        { replyToMessage && (
+          <div className='px-4 pt-2 border-l-4 border-violet-500 bg-gray-800 mx-3 rounded'>
+            <div className='flex justify-between items-center'>
+              <p className='text-gray-400 text-xs'>Replying to:</p>
+              <button onClick={() => {  setReplyToMessage(null) }} className='text-gray-400 text-xs'>✕</button>
+            </div>
+            <p className='text-white text-sm truncate'>{replyToMessage.content}</p>
           </div>
         )}
 

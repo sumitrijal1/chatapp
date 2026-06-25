@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
+import { setIo } from './services/socket.js'
 
 import authRouter from './routes/auth/authroutes.js';
 import chatRouter from './routes/user/chat.js';
@@ -30,6 +31,7 @@ const io = new Server(server, {
       credentials: true
    }
 });
+setIo(io)
 
 app.get('/', (req, res) => {
    res.json({ message: 'Hello from the backend!' });
@@ -74,7 +76,7 @@ server.listen(port, () => {
    console.log(`Server running on port ${port}`);
 });
 
-export { server, io };
+export { server };
 
 //// userSocketMap looks like this:
 // {

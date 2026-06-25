@@ -1,6 +1,6 @@
 import db from '../../db.js'
 import { executeWithRetry } from '../../services/dbretry.js'
-import { io } from '../../server.js'
+import { getIo } from '../../services/socket.js'
 
 
 export const deletemessageforme = async (req,res)=>{
@@ -81,6 +81,7 @@ export const deleteforeveryone = async (req, res) => {
         `UPDATE messages SET deleted_at = NOW() WHERE id = ?`,
         [messageid]
     );
+    const io = getIo()
     io.to(`chat:${msg.chat_id}`).emit('messagedeleted',{
         messageId:messageid,
         chatId:msg.chat_id

@@ -1,6 +1,6 @@
 import db from "../../db.js";
 import { executeWithRetry } from "../../services/dbretry.js";
-import { io } from "../../server.js";
+import { getIo } from '../../services/socket.js'
 
 export const forwardMessage = async (req, res) => {
    try {
@@ -150,7 +150,7 @@ export const forwardMessage = async (req, res) => {
             };
 
             // realtime event
-
+            const io = getIo()
             io.to(`chat:${chatId}`).emit(
                "new_message",
                newMessage

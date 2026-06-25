@@ -9,6 +9,7 @@ const DeleteMessage = ({messageid,onClose}) => {
   const handleMoreDelete = (e) => {
     e.stopPropagation(); // prevents click from bubbling to parent
     setDeleteMessage((prev) => !prev); // toggle instead of only setting true
+   
   };
   console.log(deleteMessage);
 
@@ -23,6 +24,7 @@ const DeleteMessage = ({messageid,onClose}) => {
     e.stopPropagation();
     // Handle delete for everyone logic here
     dispatch(deleteforeveryone(messageid)); // Call the thunk to delete the message for everyone
+    
    onClose()
   };
   
