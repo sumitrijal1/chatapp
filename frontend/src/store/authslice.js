@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { API, apiauthen } from "../http";
 import {io} from 'socket.io-client'
 import { getSocket,initSocket, disconnectSocket} from "../http/socketmanager";
+import { fetchChats, fetchUsers } from "./chatslice";
 
 const statususe = Object.freeze({
     idle: 'idle',
@@ -72,14 +73,24 @@ export function loginuser(data){
             const response = await API.post("/login",data)
             dispatch(setUser(response.data.user))
             dispatch(setToken(response.data.token))
+            localStorage.setItem("token", response.data.token)
+            dispatch(connectSocket())
+            
+            console.log("token set:", response.data.token) // ← add
+            
+            const chatResult = await dispatch(fetchChats())
+            console.log("fetchChats result:", chatResult)  // ← add
+            
+            const userResult = await dispatch(fetchUsers())
+            console.log("fetchUsers result:", userResult)  // ← add
           
             dispatch(setStatus(statususe.succeeded))
             
         } catch(error){
+            console.log("loginuser error:", error) // ← add
             dispatch(setStatus(statususe.failed))
         }
-        dispatch(connectSocket())
-}
+    }
 }
 //The rule is — always set succeeded status last, after everything else is ready. Since useEffect watches status, it fires the moment status changes — so anything after setStatus(succeeded) may be too late.
 

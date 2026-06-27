@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { fetchUsers, createPrivateChat, creategroupChat } from "../store/chatslice";
+import { fetchUsers, createPrivateChat, creategroupChat, newuser } from "../store/chatslice";
 import { setSelecteduser } from "../store/chatslice";
 import { addMembersToGroupChat } from "../store/chatslice";
+import { getSocket } from "../http/socketmanager";
 
 
 export default function UsersList({mode ="default",chatId =null,chatType =null,otherUserId =null, onClose= null}) {
@@ -13,10 +14,28 @@ export default function UsersList({mode ="default",chatId =null,chatType =null,o
     const [groupname, setGroupname] = useState("")      // group name input
     const [showgroupinput, setShowgroupinput] = useState(false)
      const { chatdata } = useSelector((state) => state.chat)
+     const {data:currentuser} = useSelector((state)=> state.auth)
 
     useEffect(() => {
         dispatch(fetchUsers())
     }, [dispatch])
+  
+
+    useEffect(()=>{
+      const socket = getSocket()
+      if(!socket) return
+      const handlenewuser =(user)=>{
+        if(user.id !== currentuser?.id){
+         dispatch(newuser(user))
+        }
+        
+      }
+      socket.on("newuser",handlenewuser)
+      return()=>{
+        socket.off("newuser",handlenewuser)
+      }
+    },[dispatch,currentuser])
+
 
 
     

@@ -12,7 +12,11 @@ export default function ChatList() {
     useEffect(() => {
         dispatch(fetchChats())
     },[])
-
+    // ChatList.jsx
+useEffect(() => {
+    console.log("ChatList mounted!")  // ← mount bhairako cha?
+    dispatch(fetchChats())
+}, [])
     if (chatstatus === "loading") {
         return <div className="p-3 text-white">Loading chats...</div>
     } 

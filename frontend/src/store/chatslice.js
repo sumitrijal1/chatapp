@@ -43,6 +43,14 @@ const chatslice = createSlice({
     deleteChat(state,action){ 
         state.chatdata = state.chatdata.filter(chat => chat.id !== action.payload.chatId)
     },
+     newuser(state,action){
+        const exist = state.users.find(
+            user => user.id === action.payload.id
+        )
+        if(!exist){
+            state.users.push(action.payload)
+        }
+     }
 //     addChat(state,action){
 //     const exists = state.chatdata.find(
 //         chat => chat.id === action.payload.id
@@ -57,7 +65,7 @@ const chatslice = createSlice({
   }
 })
 
-    export const {setUsers,setChatdata,setuserStatus,setchatStatus,setSelecteduser,setSelectedchat,deleteChat,addChat} = chatslice.actions
+    export const {setUsers,setChatdata,setuserStatus,setchatStatus,setSelecteduser,setSelectedchat,deleteChat,newuser} = chatslice.actions
 
     export default chatslice.reducer
 

@@ -29,7 +29,7 @@ const Loginpage = () => {
 
 useEffect(() => {
   if (status === "succeeded") {
-    localStorage.setItem("token", token)
+    
     dispatch(resetStatus()) // 👈 reset BEFORE navigate
     navigate("/")
   }
