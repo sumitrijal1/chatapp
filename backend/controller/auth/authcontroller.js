@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from "../../db.js";
 import { executeWithRetry } from "../../services/dbretry.js";
-
+import { getIo } from '../../services/socket.js';
 
 export const register = async (req, res) => {
     try {
@@ -12,22 +12,22 @@ export const register = async (req, res) => {
                 message:"please fill all the fields"
             })
         }
-         let imageurl = null;
+        //  let imageurl = null;
         
-              if (image) {
-                 const uploadresponse = await cloudinary.uploader.upload(image);
-                 imageurl = uploadresponse.secure_url;
-              }
+        //       if (image) {
+        //          const uploadresponse = await cloudinary.uploader.upload(image);
+        //          imageurl = uploadresponse.secure_url;
+        //       }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const [result] = await executeWithRetry(db,
-            'INSERT INTO users (name, email, password, image) VALUES (?, ?, ?, ?)',
-            [username, email, hashedPassword, imageurl]
+            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+            [username, email, hashedPassword]
         )
         res.status(201).json({
             message: "User registered successfully",
             userId: result.insertId,
-            image: imageurl
+           
         });
     } catch (error) {
         console.error('Register error:', error.message);
@@ -61,14 +61,17 @@ export const login = async(req,res)=>{
                 message:"Invalid email or password"
             })
         }
+        const io= getIo()
+    io.emit("newuser",{id:user.id, name:user.name,email:user.email})
         const token = jwt.sign({
             id:user.id,name:user.name,email:user.email
         }, process.env.JWT_SECRET, {expiresIn:'7d'});
+
         res.json({ token ,user:{
             id:user.id,
             name:user.name,
             email:user.email,
-            image:user.image
+            
         }});
     } catch (error) {
         console.error('Login error:', error.message);
