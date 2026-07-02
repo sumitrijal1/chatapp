@@ -65,3 +65,8 @@ export const sendmessage = async (req, res) => {
         res.status(500).json({ message: error.message || "Failed to send message" });
     }
 };
+
+// Socket = "live" को necessary condition हो, तर sufficient होइन। Socket ले data ल्याउँछ (यो बिना live हुँदैन, तपाईंले page 
+//    refresh गर्नुपर्ने हुन्थ्यो वा polling चलाउनु पर्ने हुन्थ्यो)। तर UI मा त्यो data देखिनको लागि कुनै न कुनै reactive state system (Redux को useSelector,
+//        वा React को useState) 
+// चाहिन्छ जसले "state फेरियो, अब re-render गर" भन्ने काम गर्छ। दुबै मिलेर मात्र "live update" बन्छ — कुनै एउटाले मात्र गर्दैन।

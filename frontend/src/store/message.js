@@ -95,6 +95,18 @@ export function deleteforeveryone(messageid,chatid){
         }
     }   
 }
+export function forwardmessage( messageIds,targetChatids){
+    return async function forwardmessageThunk(dispatch){
+        try{
+            const response = await apiauthen.post("/message/forwardmessage",messageIds,targetChatids)
+            dispatch(setMessageStatus(statususe.succeeded))
+        }
+        catch(error){
+            console.error('Error forwarding message:', error)
+            dispatch(setMessageStatus(statususe.failed))
+        }
+    }
+}
 //here we are manually updating the messageid ourselves instead of relying in chagned db like we are
 //ourselves making the deleted_at=something like not relying in changed db value 
 //if we need to rely in changed db value then we need to refetch the updated message in backend 

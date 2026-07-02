@@ -34,8 +34,12 @@ const Chatcontainer = () => {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [selectedmessage, setSelectedmessage] = useState(null)
   const [replyToMessage, setReplyToMessage] = useState(null)
-  
- 
+
+  // --- Forward message state ---
+  // selectmsg: array of messages selected for multi-forward (via clicking messages)
+  // selectMode: whether multi-select mode is active
+  const [selectmsg, setSelectmsg] = useState([])
+  const [selectMode, setSelectMode] = useState(false)
 
   const selectedChatData = chatdata.find(chat => chat.id === selectedchat)
 
@@ -69,27 +73,27 @@ const Chatcontainer = () => {
     }
   }, [selectedchat, dispatch]);
 
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-    const handleNewMessage = (message) => {
+ useEffect(() => {
+  const socket = getSocket();
+  if (!socket) return;
+  const handleNewMessage = (message) => {
+    if (String(message.chat_id) === String(selectedchat)) {
       dispatch(setsendmessage(message));
     }
-    socket.on("newMessage", handleNewMessage);
-    return () => {
-      socket.off("newMessage", handleNewMessage);
-    }
-  }, [dispatch])
+  }
+  socket.on("newMessage", handleNewMessage);
+  return () => {
+    socket.off("newMessage", handleNewMessage);
+  }
+}, [dispatch, selectedchat])
 
   useEffect(() => {
     if (openMenuId === null) return
-
     const handleClickOutside = (e) => {
       if (!e.target.closest('.message-menu-wrapper')) {
         setOpenMenuId(null)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [openMenuId])
@@ -100,10 +104,16 @@ const Chatcontainer = () => {
         setShowoptions(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showoptions])
+
+  // When select mode is turned off, clear all selected messages
+  useEffect(() => {
+    if (!selectMode) {
+      setSelectmsg([])
+    }
+  }, [selectMode])
 
   const handlesendimage = async (e) => {
     const file = e.target.files[0]
@@ -121,23 +131,20 @@ const Chatcontainer = () => {
 
   const handlesendmessage = () => {
     if (!input.trim() && !selectedImage) return;
-
     dispatch(
       sendmessage(
         {
           text: input,
           image: selectedImage,
-          reply_to:  replyToMessage?.id ?? null 
+          reply_to: replyToMessage?.id ?? null,
         },
         selectedchat
       )
     );
-
     setInput("");
     setSelectedImage(null);
     setPreviewImage(null);
     setReplyToMessage(null);
-
   };
 
   const handleshowmembers = () => {
@@ -156,6 +163,25 @@ const Chatcontainer = () => {
   const handlereply = (msg) => {
     setOpenMenuId(null)
     setReplyToMessage(msg)
+  }
+
+  // --- Toggle a single message in/out of selectmsg ---
+  const toggleSelectMsg = (msg) => {
+    const alreadySelected = selectmsg.find(u => u.id === msg.id)
+    if (alreadySelected) {
+      setSelectmsg(selectmsg.filter(u => u.id !== msg.id))
+    } else {
+      setSelectmsg([...selectmsg, msg])
+    }
+  }
+
+  
+ 
+
+  // --- Multi-select: clicking a message in select mode toggles it ---
+  const handleMessageClick = (msg) => {
+    if (!selectMode) return   // do nothing if not in select mode
+    toggleSelectMsg(msg)
   }
 
   return selectedChatData ? (
@@ -179,6 +205,8 @@ const Chatcontainer = () => {
           ) : null}
         </p>
         <img onClick={() => dispatch(setSelectedchat(null))} src={assets.arrow_icon} alt="" className='md:hidden max-w-7' />
+
+        {/* Help icon / more options */}
         <div onClick={handlemoreoptions} className='relative cursor-pointer header-options'>
           <img src={assets.help_icon} alt="" className='max-md:hidden max-w-5' />
           {showoptions && (
@@ -188,11 +216,24 @@ const Chatcontainer = () => {
                   <p onClick={() => { setShowAddMembers(true); setShowoptions(false) }}>add members</p>
                   <p onClick={() => dispatch(deleteChatById(selectedChatData.id))}>leave group</p>
                   <p onClick={handleshowmembers}>see list of members</p>
+
+                  {/* Multi-forward: enter select mode, then user picks messages, then opens ForwardMessage */}
+                  
+                    <p onClick={() => { setSelectMode(true); setShowoptions(false) }} className='cursor-pointer text-white'>
+                      select messages
+                    </p>
+                   
                 </>
               ) : (
                 <>
                   <p onClick={() => dispatch(deleteChatById(selectedChatData.id))}>delete chat</p>
                   <p onClick={() => { setShowAddMembers(true); setShowoptions(false) }}>add members</p>
+
+                  
+                    <p onClick={() => { setSelectMode(true); setShowoptions(false) }} className='cursor-pointer text-white'>
+                      select messages
+                    </p>
+                 
                 </>
               )}
             </div>
@@ -218,42 +259,95 @@ const Chatcontainer = () => {
         </div>
       </div>
 
+      {/* Select mode bar — shown when selectMode is active */}
+      {selectMode  && (
+        <div className='flex items-center justify-between px-4 py-2 bg-violet-900/50 border-b border-violet-500'>
+          <p className='text-white text-sm'>{selectmsg.length} message{selectmsg.length !== 1 ? 's' : ''} selected</p>
+          <div className='flex gap-3'>
+            {selectmsg.length > 0 && (
+              <ForwardMessage
+                selectmsg={selectmsg}
+                onDone={() => { setSelectMode(false); setSelectmsg([]) }}
+              />
+            )}
+            <button
+              onClick={() => setSelectMode(false)}
+              className='text-gray-400 text-sm hover:text-white'
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* chat area */}
       <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
         {messages?.map((msg, index) => (
           <div
             key={index}
-            className={`group relative flex items-end gap-2 justify-end ${msg.sender_id !== data.id && 'flex-row-reverse'}`}
+            onClick={() => handleMessageClick(msg)}   // only works in selectMode
+            className={`group relative flex items-end gap-2 justify-end 
+              ${msg.sender_id !== data.id && 'flex-row-reverse'}
+              ${selectMode ? 'cursor-pointer' : ''}
+            `}
           >
+            {/* Checkbox visible only in select mode */}
+            {selectMode && (
+              <input
+                type="checkbox"
+                checked={!!selectmsg.find(u => u.id === msg.id)}
+                onChange={() => toggleSelectMsg(msg)}
+                onClick={(e) => e.stopPropagation()}
+                className='self-center mr-1 accent-violet-500'
+              />
+            )}
+
             <div className="relative">
               {msg.image_url ? (
                 <img src={msg.image_url} className='max-w-[230px] border border-gray-700 rounded-lg overflow-hidden mb-8' />
               ) : (
                 <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white 
                   ${msg.sender_id === data.id ? 'rounded-br-none' : 'rounded-bl-none'}`}>
+
+                  {/* Reply preview */}
                   {msg.reply_to && (
-    <span className='block text-xs text-gray-400 border-l-2 border-violet-400 pl-2 mb-1'>
-      {messages.find(m => m.id === msg.reply_to)?.content || "deleted message"}
-    </span>
-  )}
+                    <span className='block text-xs text-gray-400 border-l-2 border-violet-400 pl-2 mb-1'>
+                      {messages.find(m => m.id === msg.reply_to)?.content || "deleted message"}
+                    </span>
+                  )}
 
+                  {/* Forwarded label */}
+                  {msg.forwarded_from && (
+                    <span className='block text-xs text-gray-400 italic mb-1'>↪ Forwarded</span>
+                  )}
 
-
-                  {msg.deleted_at ? (<span className="text-gray-500 italic">This message was deleted</span>) : msg.content}
+                  {/* Message content */}
+                  {msg.deleted_at ? (
+                    <span className="text-gray-500 italic">This message was deleted</span>
+                  ) : (
+                    msg.content
+                  )}
                 </p>
               )}
 
+              {/* Three-dot menu dropdown */}
               {openMenuId === msg.id && (
                 <div className={`message-menu-wrapper absolute top-0 ${msg.sender_id === data.id ? 'right-full mr-2' : 'left-full ml-2'} bg-gray-800 rounded-lg p-2 w-32 flex flex-col gap-2 z-20 text-white text-sm shadow-lg`}>
-                  <div >
-                    <DeleteMessage messageid={msg.id} chatid={selectedChatData.id}   onClose={() => setOpenMenuId(null)} />
+                  <div>
+                    <DeleteMessage messageid={msg.id} chatid={selectedChatData.id} onClose={() => setOpenMenuId(null)} />
                   </div>
                   <div onClick={() => handlereply(msg)}>
-                    <p className="text-white cursor-pointer">Reply</p>
+                    <p className="text-white cursor-pointer">reply</p>
                   </div>
-                  <div onClick={() => setOpenMenuId(null)}>
-                    <ForwardMessage />
-                  </div>
+                  {/* Single message forward from three-dot menu */}
+                  {/* Single message forward from three-dot menu */}
+<div onClick={(e) => e.stopPropagation()}>
+  <ForwardMessage
+    selectmsg={[msg]}
+    isSingleForward={true}
+    onDone={() => setOpenMenuId(null)}
+  />
+</div>
                 </div>
               )}
             </div>
@@ -266,24 +360,20 @@ const Chatcontainer = () => {
               />
               <p className='text-gray-500'>{formatmessagetime(msg.sent_at)}</p>
             </div>
-           {msg.deleted_at ?
-            null
-            : <button
-              onClick={() => handlebuttonclick(msg.id)}
-              className="message-menu-wrapper self-center p-1 mb-8 rounded-full hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 order-first"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 text-gray-400"
+
+            {/* Three-dot button — hidden when deleted or in select mode */}
+            {!msg.deleted_at && !selectMode && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handlebuttonclick(msg.id) }}
+                className="message-menu-wrapper self-center p-1 mb-8 rounded-full hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 order-first"
               >
-                <circle cx="12" cy="5" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="12" cy="19" r="2" />
-              </svg>
-            </button>}
-            
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gray-400">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+            )}
           </div>
         ))}
         <div ref={scrollend}></div>
@@ -294,16 +384,9 @@ const Chatcontainer = () => {
         {previewImage && (
           <div className='px-4 pt-2'>
             <div className='relative inline-block'>
-              <img
-                src={previewImage}
-                alt="preview"
-                className='w-16 h-16 rounded-lg object-cover border border-gray-600'
-              />
+              <img src={previewImage} alt="preview" className='w-16 h-16 rounded-lg object-cover border border-gray-600' />
               <button
-                onClick={() => {
-                  setPreviewImage(null);
-                  setSelectedImage(null);
-                }}
+                onClick={() => { setPreviewImage(null); setSelectedImage(null); }}
                 className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center cursor-pointer'
               >
                 ✕
@@ -313,11 +396,11 @@ const Chatcontainer = () => {
         )}
 
         {/* Reply preview */}
-        { replyToMessage && (
+        {replyToMessage && (
           <div className='px-4 pt-2 border-l-4 border-violet-500 bg-gray-800 mx-3 rounded'>
             <div className='flex justify-between items-center'>
               <p className='text-gray-400 text-xs'>Replying to:</p>
-              <button onClick={() => {  setReplyToMessage(null) }} className='text-gray-400 text-xs'>✕</button>
+              <button onClick={() => setReplyToMessage(null)} className='text-gray-400 text-xs'>✕</button>
             </div>
             <p className='text-white text-sm truncate'>{replyToMessage.content}</p>
           </div>
@@ -344,7 +427,7 @@ const Chatcontainer = () => {
     </div>
   ) : (
     <div className='flex flex-col items-center justify-center gap-2 text-gray-500 bg-white/10 max-md:hidden'>
-      <img src={assets.logo_icon} alt="" className='max-w-16' />
+      <img src={assets.logo_icon} alt="" />
       <p>Chat anytime, anywhere</p>
     </div>
   )
